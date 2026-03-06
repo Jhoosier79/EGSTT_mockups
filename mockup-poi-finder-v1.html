@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGS Trade Tool v2 — POI Finder: Miller Columns</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0b0f1a;--bg-panel:#111827;--bg-raised:#1a2236;
+  --bg-hover:#1e2d45;--bg-selected:#1a3a5c;
+  --border:#1f2d42;--border-bright:#2a4060;
+  --text-primary:#e0eaf8;--text-secondary:#7a9abf;--text-muted:#4a6480;
+  --accent:#3b82f6;--accent-dim:#1e40af;--accent-glow:rgba(59,130,246,0.15);--accent-bright:#60a5fa;
+  --badge-bg:#162032;--header-bg:#0d1524;
+  --match-poi:#fbbf24;--match-inst:#60a5fa;
+  --col-poi:128px;--col-bp:182px;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:13px;overflow:hidden}
+.shell{display:flex;flex-direction:column;height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 16px;height:48px;flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border)}
+.topbar-logo{font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--text-primary);white-space:nowrap}
+.topbar-logo span{color:var(--accent-bright)}
+.tsw{position:relative;flex:1;max-width:280px;margin-left:8px}
+.tsw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.tsw input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 10px 0 30px;height:30px;color:var(--text-secondary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none}
+.topbar-tabs{display:flex;gap:2px;margin-left:auto}
+.topbar-tab{padding:0 14px;height:30px;border-radius:4px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;transition:background .15s,color .15s}
+.topbar-tab:hover{background:var(--bg-raised);color:var(--text-primary)}
+.topbar-tab.active{background:var(--accent-dim);color:var(--accent-bright)}
+.body{display:flex;flex:1;overflow:hidden}
+
+/* ICON SIDEBAR */
+.icon-sidebar{width:44px;flex-shrink:0;background:var(--header-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px}
+.icon-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;transition:background .15s,color .15s;position:relative}
+.icon-btn:hover{background:var(--bg-raised);color:var(--text-primary)}
+.icon-btn.active{background:var(--accent-glow);color:var(--accent-bright)}
+.icon-btn.active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:2px;background:var(--accent);border-radius:0 2px 2px 0}
+
+/* ── LEFT PANEL: MILLER COLUMNS ── */
+.left-panel{
+  width:calc(var(--col-poi) + var(--col-bp) + 1px);
+  flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.left-panel-header{padding:12px 14px 8px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--text-secondary);text-transform:uppercase;display:flex;align-items:center;gap:6px;height:37px}
+.left-panel-header svg{color:var(--accent)}
+
+/* ── UNIFIED SEARCH ── */
+.unified-search{padding:7px 10px;flex-shrink:0;border-bottom:1px solid var(--border);position:relative}
+.unified-search svg.si{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.unified-search input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 28px 0 28px;height:28px;color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none;transition:border-color .15s}
+.unified-search input:focus{border-color:var(--accent-dim)}
+.unified-search input::placeholder{color:var(--text-muted)}
+.clear-btn{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);cursor:pointer;padding:2px;border-radius:3px;display:none;background:none;border:none;font-size:13px;line-height:1;transition:color .15s}
+.clear-btn:hover{color:var(--text-primary)}
+.clear-btn.visible{display:block}
+
+/* Search status strip */
+.search-status{display:none;align-items:center;gap:8px;padding:3px 12px;height:22px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--header-bg)}
+.search-status.visible{display:flex}
+.status-pill{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
+.status-pill.poi-pill{background:rgba(251,191,36,0.1);color:var(--match-poi);border:1px solid rgba(251,191,36,0.2)}
+.status-pill.inst-pill{background:rgba(96,165,250,0.1);color:var(--match-inst);border:1px solid rgba(96,165,250,0.2)}
+.status-sep{color:var(--border-bright)}
+
+/* Miller column area */
+.miller-columns{display:flex;flex:1;overflow:hidden;gap:1px;background:var(--border)}
+
+/* COLUMN 1: DISPLAY NAMES */
+.col-display{width:var(--col-poi);flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-panel);overflow:hidden}
+.col-header{height:24px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);gap:4px}
+.col-list{flex:1;overflow-y:auto;background:var(--bg-panel)}
+.col-list::-webkit-scrollbar{width:3px}
+.col-list::-webkit-scrollbar-track{background:transparent}
+.col-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+
+/* Display name items */
+.display-item{display:flex;align-items:center;justify-content:space-between;padding:5px 6px 5px 8px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;min-height:28px;gap:3px;background:var(--bg-panel)}
+.display-item:hover{background:var(--bg-hover)}
+.display-item.selected{background:var(--bg-selected);border-left-color:var(--accent)}
+.display-item-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.display-item:hover .display-item-name{color:var(--text-primary)}
+.display-item.selected .display-item-name{color:var(--accent-bright);font-weight:600}
+.match-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:none}
+.match-dot.poi-color{background:var(--match-poi);display:block}
+.match-dot.inst-color{background:var(--match-inst);display:block}
+.item-arrow{color:var(--text-muted);flex-shrink:0;opacity:0;transition:opacity .1s}
+.display-item.selected .item-arrow{opacity:1;color:var(--accent-bright)}
+.display-item:hover .item-arrow{opacity:.4}
+.no-results-msg{padding:20px 8px;text-align:center;color:var(--text-muted);font-size:10px;line-height:1.6;display:none}
+.no-results-msg.visible{display:block}
+
+/* COLUMN 2: BLUEPRINTS */
+.col-blueprints{width:var(--col-bp);flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-panel);border-left:1px solid var(--border);overflow:hidden}
+.bp-header{height:24px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);gap:4px;min-width:0}
+.bp-header.hidden{display:none}
+.bp-list{flex:1;overflow-y:auto}
+.bp-list::-webkit-scrollbar{width:3px}
+.bp-list::-webkit-scrollbar-track{background:transparent}
+.bp-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+
+/* Blueprint items */
+.blueprint-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;min-height:28px;gap:6px}
+.blueprint-item:hover{background:var(--bg-hover)}
+.blueprint-item.selected{background:var(--bg-selected);border-left-color:var(--accent)}
+.bp-filename{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.blueprint-item:hover .bp-filename{color:var(--text-primary)}
+.blueprint-item.selected .bp-filename{color:var(--accent-bright);font-weight:600}
+.bp-count{font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text-muted);flex-shrink:0;line-height:14px;height:14px;min-width:22px;text-align:center}
+.blueprint-item.selected .bp-count{color:var(--accent-bright);border-color:var(--accent-dim);background:rgba(59,130,246,0.12)}
+
+/* ── CENTRE PANEL ── */
+.centre-panel{flex:1;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+
+/* Context header */
+.centre-header{height:79px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--header-bg);display:flex;flex-direction:column;justify-content:flex-end;padding:0 16px 9px}
+.ch-superscript{font-size:10px;color:var(--accent-bright);display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.ch-type-badge{background:rgba(59,130,246,0.1);border:1px solid var(--accent-dim);border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);padding:1px 5px}
+.ch-title{font-size:18px;font-weight:700;color:var(--text-primary);display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.ch-id{font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--text-muted);font-weight:400}
+.ch-attrs{display:flex;align-items:center;gap:0;font-size:10px;color:var(--text-secondary)}
+.ch-attr{display:flex;align-items:center;gap:3px;padding:0 6px}
+.ch-attr:not(:last-child){border-right:1px solid var(--border)}
+.ch-attr-dot{width:4px;height:4px;border-radius:50%;display:inline-block}
+
+/* Centre body */
+.centre-body{display:flex;flex:1;overflow:hidden;gap:1px;background:var(--border)}
+
+/* Instance list column */
+.instances-col{width:220px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-panel);border-right:1px solid var(--border)}
+.inst-header{height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);gap:4px}
+.inst-list{flex:1;overflow-y:auto}
+.inst-list::-webkit-scrollbar{width:3px}
+.inst-list::-webkit-scrollbar-track{background:transparent}
+.inst-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+
+/* Instance rows */
+.instance-row{display:flex;flex-direction:row;align-items:flex-start;padding:6px 8px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;min-height:36px}
+.instance-row:hover{background:var(--bg-hover)}
+.instance-row.selected{background:rgba(59,130,246,0.1);border-left-color:var(--accent-bright)}
+.inst-system{font-size:11px;font-weight:500;color:var(--text-secondary)}
+.instance-row:hover .inst-system{color:var(--text-primary)}
+.instance-row.selected .inst-system{color:var(--accent-bright);font-weight:600}
+
+.inst-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:10px;text-align:center}
+
+/* Detail panel */
+.detail-panel{flex:1;display:flex;flex-direction:column;background:var(--bg-panel);overflow-y:auto;padding:12px 14px}
+.detail-panel::-webkit-scrollbar{width:3px}
+.detail-panel::-webkit-scrollbar-track{background:transparent}
+.detail-panel::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+
+.detail-section{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.detail-section:last-child{border-bottom:none}
+.detail-section-label{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.detail-section-label svg{color:var(--accent);flex-shrink:0}
+.detail-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px}
+.detail-label{color:var(--text-muted);min-width:80px}
+.detail-value{color:var(--text-secondary);text-align:right;flex:1;min-width:0;word-break:break-word}
+.detail-mono{font-family:'Share Tech Mono',monospace;font-size:10px}
+.detail-bp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.detail-empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:10px}
+
+/* ── RIGHT PANEL ── */
+.right-panel{width:240px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.right-header{height:24px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+
+#rightEmpty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px}
+#rightEmpty.hidden{display:none}
+
+#rightBody{flex:1;display:flex;flex-direction:column;padding:12px;overflow-y:auto;gap:12px}
+#rightBody::-webkit-scrollbar{width:3px}
+#rightBody::-webkit-scrollbar-track{background:transparent}
+#rightBody::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+#rightBody.hidden{display:none}
+
+.right-section{border-bottom:1px solid var(--border);padding-bottom:12px}
+.right-section:last-child{border-bottom:none}
+.right-section-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
+.right-kv{display:flex;justify-content:space-between;gap:8px;font-size:10px;margin-bottom:4px}
+.right-k{color:var(--text-muted);min-width:70px}
+.right-v{color:var(--text-secondary);text-align:right;flex:1;word-break:break-word}
+.reserved-area{padding:12px;background:rgba(59,130,246,0.05);border:1px solid var(--accent-dim);border-radius:4px;text-align:center}
+.reserved-label{display:block;font-size:9px;font-weight:700;color:var(--accent-bright);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.reserved-area p{font-size:10px;color:var(--text-muted);line-height:1.4;margin:0}
+
+/* ── FOOTER ── */
+.footer{height:20px;flex-shrink:0;background:var(--header-bg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace}
+.option-badge{background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:2px 6px;color:var(--text-secondary);font-size:8px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">EGS Trade Tool <span>v2</span></div>
+    <div class="tsw">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input type="text" placeholder="Jump to star...">
+    </div>
+    <div class="topbar-tabs">
+      <div class="topbar-tab">Star Catalogue</div>
+      <div class="topbar-tab active">POI Finder</div>
+      <div class="topbar-tab">Traders</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+    <!-- ICON SIDEBAR -->
+    <div class="icon-sidebar">
+      <div class="icon-btn" title="Star Catalogue">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+        </svg>
+      </div>
+      <div class="icon-btn active" title="POI Finder">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </div>
+      <div class="icon-btn" title="Traders">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-0.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-0.16.28-0.25.61-0.25.96 0 1.1.9 2 2 2h12v-2H7.42c-0.14 0-0.25-0.11-0.25-0.25l0.03-0.12 0.9-1.63h7.45c0.75 0 1.41-0.41 1.75-1.03l3.58-6.49c0.08-0.14 0.12-0.31 0.12-0.48 0-0.55-0.45-1-1-1H5.21l-0.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s0.89 2 1.99 2 2-0.9 2-2-0.9-2-2-2z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- LEFT PANEL: MILLER COLUMNS -->
+    <div class="left-panel">
+      <div class="left-panel-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        POI Finder
+      </div>
+
+      <!-- Unified Search -->
+      <div class="unified-search">
+        <svg class="si" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search POIs, blueprints...">
+        <button class="clear-btn" id="clearBtn">×</button>
+      </div>
+
+      <!-- Search Status -->
+      <div class="search-status" id="searchStatus">
+        <span class="status-pill poi-pill"><span id="poiCount">0</span> name</span>
+        <span class="status-pill inst-pill"><span id="bpCount">0</span> blueprint</span>
+        <span class="status-sep">—</span>
+        <span id="matchSummary"></span>
+      </div>
+
+      <!-- Miller Columns -->
+      <div class="miller-columns">
+        <!-- Column 1: Display Names -->
+        <div class="col-display">
+          <div class="col-list" id="col1">
+            <div class="no-results-msg" id="noResultsCol1">No matching POI names</div>
+          </div>
+        </div>
+
+        <!-- Column 2: Blueprints -->
+        <div class="col-blueprints">
+          <div class="col-header bp-header hidden" id="col2Header"></div>
+          <div class="col-list" id="col2">
+            <div class="inst-empty">Select a POI name</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRE PANEL -->
+    <div class="centre-panel">
+      <div class="centre-header" id="centreHeader"></div>
+      <div class="centre-body">
+        <!-- Instance List -->
+        <div class="instances-col">
+          <div class="inst-header">
+            <span>Instances</span>
+            <span id="instCount" style="font-family:'Share Tech Mono',monospace;background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;line-height:14px;height:14px;min-width:22px;text-align:center;font-size:9px;color:var(--text-muted)">0</span>
+          </div>
+          <div class="inst-list" id="instList">
+            <div class="inst-empty">Select a blueprint</div>
+          </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div class="detail-panel" id="detailPanel">
+          <div class="detail-empty">Select an instance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="right-header">Context</div>
+      <div id="rightEmpty">No instance selected</div>
+      <div id="rightBody" class="hidden">
+
+        <div class="reserved-area">
+          <span class="reserved-label">Reserved</span>
+          <p>System summary and quick-action buttons will appear here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>EGS Trade Tool v2</span>
+    <span class="option-badge">POI Finder — Miller Columns v1</span>
+  </div>
+</div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+// Inject solarSystems.json data here, keyed by ssid
+const STAR_MAP = {};
+
+// Inject playfieldLog.json data here, keyed by pfid
+const PF_MAP = {};
+
+// Inject poiLog.json data here, grouped by display name then blueprint
+// Structure: [{ name, blueprints: [{ blueprint, type, instances: [...poiLog rows] }] }]
+const POIS = [];
+
+const TYPE_LABELS = { 2:'BA', 3:'SV', 4:'HV', 7:'CV' };
+const TYPE_COLORS = { 2:'#f87171', 3:'#34d399', 4:'#60a5fa', 7:'#fbbf24' };
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let selectedDisplayName = null;
+let selectedBlueprint = null;
+let selectedInstanceId = null;
+let currentFilterQuery = '';
+let filteredPois = [];
+let currentPoiFilters = null;
+
+// ─── SEARCH & FILTER ──────────────────────────────────────────────────────────
+function performSearch(query) {
+  currentFilterQuery = query.toLowerCase().trim();
+  selectedDisplayName = null;
+  selectedBlueprint = null;
+  selectedInstanceId = null;
+
+  if (!currentFilterQuery) {
+    filteredPois = POIS;
+    document.getElementById('searchStatus').classList.remove('visible');
+    render();
+    return;
+  }
+
+  currentPoiFilters = { poiMatches: [], bpMatches: [], sysMatches: [] };
+  filteredPois = [];
+
+  POIS.forEach(poi => {
+    const poiNameMatch = poi.name.toLowerCase().includes(currentFilterQuery);
+    let hasBpMatch = false;
+    let hasSysMatch = false;
+    const filteredBp = [];
+
+    poi.blueprints.forEach(bp => {
+      const bpMatch = bp.blueprint.toLowerCase().includes(currentFilterQuery);
+      let sysMatch = false;
+      const instances = [];
+
+      bp.instances.forEach(inst => {
+        const sysNameMatch = inst.system.toLowerCase().includes(currentFilterQuery);
+        const pfNameMatch = inst.playfield.toLowerCase().includes(currentFilterQuery);
+        if (sysNameMatch || pfNameMatch) {
+          sysMatch = true;
+          instances.push(inst);
+        }
+      });
+
+      if (bpMatch) {
+        hasBpMatch = true;
+        filteredBp.push({ ...bp, instances: bp.instances });
+      } else if (sysMatch) {
+        hasSysMatch = true;
+        filteredBp.push({ ...bp, instances });
+      }
+    });
+
+    if (poiNameMatch || hasBpMatch || hasSysMatch) {
+      if (poiNameMatch) currentPoiFilters.poiMatches.push(poi.name);
+      if (hasBpMatch) currentPoiFilters.bpMatches.push(poi.name);
+      if (hasSysMatch) currentPoiFilters.sysMatches.push(poi.name);
+
+      filteredPois.push({
+        ...poi,
+        blueprints: poiNameMatch ? poi.blueprints : filteredBp
+      });
+    }
+  });
+
+  updateSearchStatus();
+  render();
+}
+
+function updateSearchStatus() {
+  const status = document.getElementById('searchStatus');
+  if (filteredPois.length === 0) {
+    status.classList.remove('visible');
+    return;
+  }
+
+  const filters = currentPoiFilters;
+  const poiHits = filters.poiMatches.length;
+  const bpHits = filters.bpMatches.length;
+
+  let summary = '';
+  if (poiHits > 0 && bpHits === 0 && filters.sysMatches.length === 0) {
+    summary = 'name match — all shown';
+  } else if (poiHits === 0 && bpHits > 0) {
+    const total = POIS.reduce((sum, p) => sum + p.blueprints.length, 0);
+    const matches = filteredPois.reduce((sum, p) => sum + p.blueprints.length, 0);
+    summary = `${matches} of ${total} match`;
+  } else if (poiHits === 0 && filters.sysMatches.length > 0) {
+    const total = POIS.reduce((sum, p) => sum + p.blueprints.reduce((bs, bp) => bs + bp.instances.length, 0), 0);
+    let matches = 0;
+    filteredPois.forEach(p => {
+      p.blueprints.forEach(bp => {
+        matches += bp.instances.length;
+      });
+    });
+    summary = `${matches} of ${total} instances`;
+  }
+
+  document.getElementById('poiCount').textContent = poiHits;
+  document.getElementById('bpCount').textContent = bpHits;
+  document.getElementById('matchSummary').textContent = summary;
+  status.classList.add('visible');
+}
+
+// ─── SELECTION ────────────────────────────────────────────────────────────────
+function selectDisplayName(name) {
+  const poi = filteredPois.find(p => p.name === name);
+  if (!poi) return;
+
+  selectedDisplayName = name;
+  selectedBlueprint = null;
+  selectedInstanceId = null;
+  render();
+}
+
+function selectBlueprint(bpFilename) {
+  if (!selectedDisplayName) return;
+  const poi = filteredPois.find(p => p.name === selectedDisplayName);
+  if (!poi) return;
+
+  const bp = poi.blueprints.find(b => b.blueprint === bpFilename);
+  if (!bp) return;
+
+  selectedBlueprint = bpFilename;
+  selectedInstanceId = null;
+  render();
+}
+
+function selectInstance(poiid) {
+  if (!selectedDisplayName || !selectedBlueprint) return;
+  const poi = filteredPois.find(p => p.name === selectedDisplayName);
+  if (!poi) return;
+
+  const bp = poi.blueprints.find(b => b.blueprint === selectedBlueprint);
+  if (!bp) return;
+
+  const inst = bp.instances.find(i => i.poiid === poiid);
+  if (!inst) return;
+
+  selectedInstanceId = poiid;
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render() {
+  renderCol1();
+  renderCol2();
+  renderCentre();
+  renderRight();
+}
+
+function renderCol1() {
+  const col1 = document.getElementById('col1');
+  const noResults = col1.querySelector('.no-results-msg');
+
+  if (filteredPois.length === 0) {
+    col1.innerHTML = '<div class="no-results-msg visible">No matching POI names</div>';
+    return;
+  }
+
+  let html = '';
+  filteredPois.forEach(poi => {
+    const isSelected = poi.name === selectedDisplayName;
+    let dotClass = 'match-dot';
+    if (currentFilterQuery) {
+      if (currentPoiFilters.poiMatches.includes(poi.name)) dotClass += ' poi-color';
+      else dotClass += ' inst-color';
+    }
+
+    html += `<div class="display-item ${isSelected ? 'selected' : ''}" onclick="selectDisplayName('${poi.name.replace(/'/g, "\\'")}')">
+      <span class="display-item-name">${poi.name}</span>
+      <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+        <span class="${dotClass}"></span>
+        <span class="item-arrow">›</span>
+      </div>
+    </div>`;
+  });
+
+  col1.innerHTML = html;
+}
+
+function renderCol2() {
+  const col2 = document.getElementById('col2');
+  const col2Header = document.getElementById('col2Header');
+
+  if (!selectedDisplayName) {
+    col2Header.classList.add('hidden');
+    col2.innerHTML = '<div class="inst-empty">Select a POI name</div>';
+    return;
+  }
+
+  const poi = filteredPois.find(p => p.name === selectedDisplayName);
+  if (!poi || poi.blueprints.length === 0) {
+    col2Header.classList.add('hidden');
+    col2.innerHTML = '<div class="inst-empty">No blueprints</div>';
+    return;
+  }
+
+  col2Header.classList.remove('hidden');
+  const distinctTypes = [...new Set(poi.blueprints.map(b => b.type))].sort();
+  const typeBadges = distinctTypes.map(t => {
+    const color = TYPE_COLORS[t] || '#999';
+    const label = TYPE_LABELS[t] || '?';
+    return `<span style="color:${color};background:${color}1a;border:1px solid ${color}55;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:.06em;padding:0 4px;line-height:14px;flex-shrink:0">${label}</span>`;
+  }).join('');
+  col2Header.innerHTML = `<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${selectedDisplayName}</span>${typeBadges}`;
+
+  let html = '';
+  poi.blueprints.forEach(bp => {
+    const isSelected = bp.blueprint === selectedBlueprint;
+    html += `<div class="blueprint-item ${isSelected ? 'selected' : ''}" onclick="selectBlueprint('${bp.blueprint.replace(/'/g, "\\'")}')">
+      <span class="bp-filename">${bp.blueprint}</span>
+      <span class="bp-count">${bp.instances.length}</span>
+    </div>`;
+  });
+
+  col2.innerHTML = html;
+}
+
+function renderCentre() {
+  const header = document.getElementById('centreHeader');
+  const instList = document.getElementById('instList');
+  const detailPanel = document.getElementById('detailPanel');
+
+  if (!selectedDisplayName) {
+    header.innerHTML = '';
+    instList.innerHTML = '<div class="inst-empty">Select a POI name</div>';
+    detailPanel.innerHTML = '<div class="detail-empty">Select a blueprint</div>';
+    document.getElementById('instCount').textContent = '0';
+    return;
+  }
+
+  const poi = filteredPois.find(p => p.name === selectedDisplayName);
+  if (!poi) return;
+
+  if (!selectedBlueprint) {
+    renderCentreHeaderNameOnly(poi);
+    instList.innerHTML = '<div class="inst-empty">Select a blueprint</div>';
+    detailPanel.innerHTML = '<div class="detail-empty">Select a blueprint</div>';
+    document.getElementById('instCount').textContent = '0';
+    return;
+  }
+
+  const bp = poi.blueprints.find(b => b.blueprint === selectedBlueprint);
+  if (!bp) return;
+
+  const inst = selectedInstanceId ? bp.instances.find(i => i.poiid === selectedInstanceId) : null;
+  renderCentreHeaderBlueprint(poi, bp, inst);
+  renderInstList(bp.instances);
+
+  if (!inst) {
+    detailPanel.innerHTML = '<div class="detail-empty">Select an instance</div>';
+  } else {
+    renderDetail(inst, bp);
+  }
+}
+
+function renderCentreHeaderNameOnly(poi) {
+  const header = document.getElementById('centreHeader');
+  const totalInsts = poi.blueprints.reduce((sum, bp) => sum + bp.instances.length, 0);
+  header.innerHTML = `
+    <div class="ch-title">${poi.name}</div>
+    <div class="ch-attrs">
+      <div class="ch-attr">
+        <span>${poi.blueprints.length} blueprint${poi.blueprints.length !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="ch-attr">
+        <span>${totalInsts} instance${totalInsts !== 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderCentreHeaderBlueprint(poi, bp, inst) {
+  const header = document.getElementById('centreHeader');
+  const typeLabel = TYPE_LABELS[bp.type] || '?';
+  const typeColor = TYPE_COLORS[bp.type] || '#999';
+
+  let attrsHtml = `<div class="ch-attr"><span>${bp.instances.length} instance${bp.instances.length !== 1 ? 's' : ''}</span></div>`;
+
+  if (inst) {
+    const factionBadge = inst.faction === 255
+      ? `<span style="background:var(--badge-bg);color:var(--text-muted);border:1px solid var(--border);border-radius:3px;font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 5px;text-transform:uppercase">None</span>`
+      : `<span style="background:rgba(239,68,68,0.08);color:#f87171;border:1px solid rgba(239,68,68,0.2);border-radius:3px;font-size:9px;font-weight:600;letter-spacing:.04em;padding:1px 5px;text-transform:uppercase">ID&nbsp;${inst.faction}</span>`;
+    attrsHtml = `
+      <div class="ch-attr"><span style="color:var(--text-primary);font-weight:500">${inst.system}</span></div>
+      <span class="ch-sep">|</span>
+      <div class="ch-attr"><span style="color:var(--text-secondary)">${inst.playfield}</span></div>
+      <span class="ch-sep">|</span>
+      <div class="ch-attr">${factionBadge}</div>`;
+  }
+
+  header.innerHTML = `
+    <div class="ch-superscript">
+      <span style="color:var(--accent-bright)">${bp.blueprint}</span>
+      <span class="ch-type-badge" style="color:${typeColor};background:${typeColor}1a;border-color:${typeColor}55">${typeLabel}</span>
+    </div>
+    <div class="ch-title">${poi.name}</div>
+    <div class="ch-attrs">${attrsHtml}</div>
+  `;
+}
+
+function renderInstList(instances) {
+  const list = document.getElementById('instList');
+  const count = document.getElementById('instCount');
+  count.textContent = instances.length;
+
+  if (instances.length === 0) {
+    list.innerHTML = '<div class="inst-empty">No instances</div>';
+    return;
+  }
+
+  let html = '';
+  instances.forEach(inst => {
+    const isSelected = inst.poiid === selectedInstanceId;
+    const factionDotColor = inst.faction === 255 ? 'var(--text-muted)' : '#f87171';
+    const factionTitle = inst.faction === 255 ? 'Faction: None' : `Faction ID: ${inst.faction}`;
+    const star = STAR_MAP[inst.ssid];
+    const coords = star
+      ? `${star.sector.x.toLocaleString()} / ${star.sector.y.toLocaleString()} / ${star.sector.z.toLocaleString()}`
+      : '—';
+    html += `<div class="instance-row ${isSelected ? 'selected' : ''}" onclick="selectInstance(${inst.poiid})">
+      <div style="display:flex;align-items:flex-start;gap:5px;min-width:0;flex:1">
+        <span title="${factionTitle}" style="width:6px;height:6px;border-radius:50%;background:${factionDotColor};flex-shrink:0;margin-top:3px"></span>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:4px">
+            <span class="inst-system">${inst.system}<span style="color:var(--border-bright);margin:0 4px">|</span>${inst.playfield}</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:4px">
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted)">ID: ${inst.poiid}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text-muted);opacity:0.7;text-align:right;flex-shrink:0">${coords}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function renderDetail(inst, bp) {
+  const panel = document.getElementById('detailPanel');
+  const typeLabel = TYPE_LABELS[bp.type] || '?';
+  const typeColor = TYPE_COLORS[bp.type] || '#999';
+  const factionLabel = inst.faction === 255 ? 'None' : `ID ${inst.faction}`;
+  const factionStyle = inst.faction === 255 ? 'color:var(--text-secondary)' : 'color:#f87171;font-weight:600';
+
+  panel.innerHTML = `
+    <div class="detail-section" style="flex:1">
+      <div class="detail-section-label">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Traders &amp; Notes
+      </div>
+    </div>
+    <div class="reserved-area">
+      <span class="reserved-label">Reserved</span>
+      <p>Trader inventory and player notes will appear here in a future update.</p>
+    </div>
+  `;
+}
+
+function renderRight() {
+  const rightEmpty = document.getElementById('rightEmpty');
+  const rightBody = document.getElementById('rightBody');
+
+  if (!selectedInstanceId || !selectedDisplayName || !selectedBlueprint) {
+    rightEmpty.classList.remove('hidden');
+    rightBody.classList.add('hidden');
+    return;
+  }
+
+  const poi = POIS.find(p => p.name === selectedDisplayName);
+  const bp = poi.blueprints.find(b => b.blueprint === selectedBlueprint);
+  const inst = bp.instances.find(i => i.poiid === selectedInstanceId);
+
+  if (!inst) {
+    rightEmpty.classList.remove('hidden');
+    rightBody.classList.add('hidden');
+    return;
+  }
+
+  rightEmpty.classList.add('hidden');
+  rightBody.classList.remove('hidden');
+
+  // location now shown in centre header
+}
+
+// ─── EVENT LISTENERS ──────────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  performSearch(e.target.value);
+  const clearBtn = document.getElementById('clearBtn');
+  if (e.target.value.length > 0) {
+    clearBtn.classList.add('visible');
+  } else {
+    clearBtn.classList.remove('visible');
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('searchInput').value = '';
+  performSearch('');
+  document.getElementById('clearBtn').classList.remove('visible');
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+filteredPois = POIS;
+render();
+selectDisplayName('Treasure');
+</script>
+</body>
+</html>

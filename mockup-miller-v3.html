@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGS Trade Tool v2 — Miller v3: Real Data</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0b0f1a;--bg-panel:#111827;--bg-raised:#1a2236;
+  --bg-hover:#1e2d45;--bg-selected:#1a3a5c;
+  --border:#1f2d42;--border-bright:#2a4060;
+  --text-primary:#e0eaf8;--text-secondary:#7a9abf;--text-muted:#4a6480;
+  --accent:#3b82f6;--accent-dim:#1e40af;--accent-glow:rgba(59,130,246,0.15);--accent-bright:#60a5fa;
+  --badge-bg:#162032;--header-bg:#0d1524;
+  --match-star:#fbbf24;--match-pf:#60a5fa;
+  --col-star:112px;--col-pf:188px;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:13px;overflow:hidden}
+.shell{display:flex;flex-direction:column;height:100vh}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;gap:16px;padding:0 16px;height:48px;flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border)}
+.topbar-logo{font-size:15px;font-weight:700;letter-spacing:.04em;color:var(--text-primary);white-space:nowrap}
+.topbar-logo span{color:var(--accent-bright)}
+.tsw{position:relative;flex:1;max-width:280px;margin-left:8px}
+.tsw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.tsw input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 10px 0 30px;height:30px;color:var(--text-secondary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none}
+.t-tabs{display:flex;gap:2px;margin-left:auto}
+.t-tab{padding:0 14px;height:30px;border-radius:4px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center}
+.t-tab.active{background:var(--accent-dim);color:var(--accent-bright)}
+.t-icons{display:flex;gap:8px;align-items:center;margin-left:12px}
+.t-icon{color:var(--text-muted);cursor:pointer;padding:4px;border-radius:4px}
+.body{display:flex;flex:1;overflow:hidden}
+
+/* ICON SIDEBAR */
+.icon-sidebar{width:44px;flex-shrink:0;background:var(--header-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px}
+.i-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;position:relative}
+.i-btn:hover{background:var(--bg-raised);color:var(--text-primary)}
+.i-btn.active{background:var(--accent-glow);color:var(--accent-bright)}
+.i-btn.active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:2px;background:var(--accent);border-radius:0 2px 2px 0}
+
+/* LEFT PANEL */
+.left-panel{width:calc(var(--col-star) + var(--col-pf) + 1px);flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.lp-header{padding:11px 14px 8px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--text-secondary);text-transform:uppercase;display:flex;align-items:center;gap:6px;height:37px}
+.lp-header svg{color:var(--accent)}
+
+/* UNIFIED SEARCH */
+.u-search{padding:6px 10px;flex-shrink:0;border-bottom:1px solid var(--border);position:relative}
+.u-search .si{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.u-search input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 28px 0 28px;height:28px;color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none;transition:border-color .15s}
+.u-search input:focus{border-color:var(--accent-dim)}
+.u-search input::placeholder{color:var(--text-muted)}
+.clr-btn{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);cursor:pointer;padding:2px;border-radius:3px;display:none;background:none;border:none;font-size:13px;line-height:1}
+.clr-btn:hover{color:var(--text-primary)}
+.clr-btn.vis{display:block}
+
+/* STATUS STRIP */
+.s-status{display:none;align-items:center;gap:6px;padding:3px 10px;height:22px;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--header-bg);font-size:9px;font-family:'Share Tech Mono',monospace}
+.s-status.vis{display:flex}
+.s-pill{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
+.s-pill.star{background:rgba(251,191,36,.1);color:var(--match-star);border:1px solid rgba(251,191,36,.2)}
+.s-pill.pf{background:rgba(96,165,250,.1);color:var(--match-pf);border:1px solid rgba(96,165,250,.2)}
+
+/* MILLER COLUMNS */
+.miller{display:flex;flex:1;overflow:hidden}
+.col-stars{width:var(--col-star);flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.col-header{height:24px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);gap:4px}
+.col-list{flex:1;overflow-y:auto}
+.col-list::-webkit-scrollbar{width:3px}
+.col-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+.col-footer{height:20px;flex-shrink:0;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 8px;font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace}
+
+/* STAR ITEMS */
+.s-item{display:flex;align-items:center;justify-content:space-between;padding:5px 5px 5px 8px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;min-height:28px;gap:3px}
+.s-item:hover{background:var(--bg-hover)}
+.s-item.sel{background:var(--bg-selected);border-left-color:var(--accent)}
+.s-item.no-pf{opacity:.45}
+.s-item.no-pf:hover{opacity:.7}
+.s-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.s-item:hover .s-name{color:var(--text-primary)}
+.s-item.sel .s-name{color:var(--accent-bright);font-weight:600}
+.s-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:none}
+.s-dot.star-c{background:var(--match-star);display:block}
+.s-dot.pf-c{background:var(--match-pf);display:block}
+.s-arr{color:var(--text-muted);flex-shrink:0;opacity:0;transition:opacity .1s}
+.s-item.sel .s-arr{opacity:1;color:var(--accent-bright)}
+.s-item:hover .s-arr{opacity:.4}
+.no-res{padding:20px 8px;text-align:center;color:var(--text-muted);font-size:10px;line-height:1.6;display:none}
+.no-res.vis{display:block}
+
+/* PLAYFIELD COLUMN */
+.col-pfs{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.pf-hdr{height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 10px;background:var(--header-bg);border-bottom:1px solid var(--border);gap:4px}
+.pf-hdr-l{display:flex;align-items:center;gap:4px;min-width:0}
+.pf-hdr-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+.pf-hdr-star{font-size:10px;font-weight:600;color:var(--accent-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.pf-hdr-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:rgba(59,130,246,.1);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;flex-shrink:0;line-height:14px}
+.pf-filter{display:none;align-items:center;justify-content:space-between;padding:3px 10px;height:20px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;background:rgba(96,165,250,.04)}
+.pf-filter.vis{display:flex}
+.pf-filter-lbl{color:var(--match-pf);font-weight:600}
+.pf-list{flex:1;overflow-y:auto}
+.pf-list::-webkit-scrollbar{width:3px}
+.pf-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+.pf-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px 5px 10px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;gap:4px;min-height:34px}
+.pf-item:hover{background:var(--bg-hover)}
+.pf-item.sel{background:rgba(59,130,246,.1);border-left-color:var(--accent-bright)}
+.pf-item.sm{border-left-color:rgba(96,165,250,.35)}
+.pf-item.sel.sm{border-left-color:var(--accent-bright)}
+.pf-info{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.pf-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-item:hover .pf-name{color:var(--text-primary)}
+.pf-item.sel .pf-name{color:var(--accent-bright);font-weight:600}
+.pf-item.sm .pf-name{color:var(--match-pf)}
+.pf-item.sel.sm .pf-name{color:var(--accent-bright)}
+.pf-type{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-badge{font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text-muted);flex-shrink:0;text-align:center;line-height:14px;height:14px;min-width:14px}
+.pf-item.sel .pf-badge{color:var(--accent-bright);border-color:var(--accent-dim);background:rgba(59,130,246,.12)}
+.pf-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-muted);padding:16px}
+.pf-empty svg{opacity:.2}
+.pf-empty p{font-size:10px;text-align:center;line-height:1.5}
+.pf-footer{height:20px;flex-shrink:0;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 10px;font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace}
+
+/* ── CENTRE PANE ── */
+.centre-pane{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+
+/* Context header */
+.ctx-header{flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border);padding:12px 16px 10px}
+.ctx-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);gap:8px}
+.ctx-empty svg{opacity:.25}
+.ctx-empty p{font-size:12px}
+
+/* Star context */
+.star-ctx-name{font-size:20px;font-weight:700;color:var(--text-primary);line-height:1.2;margin-bottom:6px}
+.star-ctx-meta{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ctx-tag{font-size:10px;font-weight:600;letter-spacing:.06em;padding:2px 7px;border-radius:3px;text-transform:uppercase;background:var(--badge-bg);border:1px solid var(--border-bright);color:var(--text-secondary)}
+.ctx-coords{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);display:flex;gap:8px}
+.ctx-coord{display:flex;gap:3px;align-items:center}
+.ctx-coord-lbl{color:var(--accent-dim);font-weight:700}
+.ctx-coord-val{color:var(--text-secondary)}
+
+/* Playfield context */
+.pf-ctx-sup{font-size:11px;color:var(--text-muted);margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.pf-ctx-sup .star-link{color:var(--accent-bright);font-weight:600}
+.pf-ctx-name{font-size:20px;font-weight:700;color:var(--text-primary);line-height:1.2;display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.pf-ctx-id{font-size:11px;font-family:'Share Tech Mono',monospace;color:var(--text-muted);font-weight:400}
+.pf-ctx-startype{font-size:10px;font-weight:600;letter-spacing:.05em;padding:1px 6px;border-radius:3px;text-transform:uppercase;background:var(--badge-bg);border:1px solid var(--border-bright);color:var(--text-secondary);margin-left:6px}
+.pf-ctx-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pf-meta-block{display:flex;flex-direction:column;gap:1px}
+.pf-meta-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
+.pf-meta-val{font-size:11px;font-weight:600;color:var(--text-secondary)}
+.pf-meta-divider{width:1px;height:28px;background:var(--border-bright);flex-shrink:0}
+
+/* Centre pane body: POI list + POI detail */
+.centre-body{flex:1;display:flex;overflow:hidden}
+
+/* POI list column */
+.poi-list-col{width:210px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.poi-col-hdr{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:var(--header-bg);border-bottom:1px solid var(--border);gap:6px}
+.poi-col-hdr-l{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:5px}
+.poi-col-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:rgba(59,130,246,.1);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;line-height:14px}
+.poi-list{flex:1;overflow-y:auto}
+.poi-list::-webkit-scrollbar{width:3px}
+.poi-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+.poi-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;border-bottom:1px solid var(--border);gap:6px}
+.poi-item:hover{background:var(--bg-hover)}
+.poi-item.sel{background:rgba(59,130,246,.08);border-left-color:var(--accent)}
+.poi-item-l{display:flex;align-items:center;gap:7px;min-width:0}
+.poi-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.poi-item-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poi-item:hover .poi-item-name{color:var(--text-primary)}
+.poi-item.sel .poi-item-name{color:var(--accent-bright)}
+.poi-item-id{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--text-muted);flex-shrink:0}
+.poi-col-footer{height:20px;flex-shrink:0;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 10px;font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace}
+.poi-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-muted);padding:16px}
+.poi-empty svg{opacity:.2}
+.poi-empty p{font-size:10px;text-align:center;line-height:1.5}
+
+/* POI detail area */
+.poi-detail-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg-base)}
+.pod-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);gap:8px}
+.pod-empty svg{opacity:.2}
+.pod-empty p{font-size:11px;text-align:center;max-width:130px;line-height:1.5}
+.pod-content{flex:1;overflow-y:auto}
+.pod-content::-webkit-scrollbar{width:4px}
+.pod-content::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
+.pod-header{padding:14px 16px 10px;border-bottom:1px solid var(--border);background:var(--header-bg)}
+.pod-name-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.pod-name{font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.2}
+.pod-blueprint{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.pod-attr-row{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.pod-attr-item{display:flex;align-items:center;gap:6px;padding-right:12px}
+.pod-attr-item+.pod-attr-item{padding-left:12px;border-left:1px solid var(--border-bright)}
+.pod-attr-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
+.pod-attr-val{font-size:12px;font-weight:500;color:var(--text-primary)}
+.pod-section{padding:10px 16px;border-bottom:1px solid var(--border)}
+.pod-section-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px}
+.pod-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pod-field{}
+.pod-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:2px}
+.pod-value{font-size:12px;font-weight:500;color:var(--text-primary)}
+.pod-value.mono{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent-bright)}
+.faction-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em}
+.f-none{background:var(--badge-bg);color:var(--text-muted);border:1px solid var(--border)}
+.f-other{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.2)}
+.type-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;border:1px solid var(--border-bright);color:var(--text-secondary);background:var(--badge-bg)}
+
+/* RIGHT PANEL */
+.right-panel{width:280px;flex-shrink:0;background:var(--bg-base);display:flex;flex-direction:column;overflow:hidden}
+.rp-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);gap:8px}
+.rp-empty svg{opacity:.15}
+.rp-empty p{font-size:11px;text-align:center;max-width:120px;line-height:1.6}
+
+.option-badge{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--accent-dim);color:var(--accent-bright);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:20px;border:1px solid var(--accent);pointer-events:none;opacity:.9}
+.footer{height:28px;flex-shrink:0;background:var(--header-bg);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#4a6480;flex-shrink:0"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span class="topbar-logo">EGS <span>Trade Tool</span></span>
+    <div class="tsw">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Set current star…"/>
+    </div>
+    <div class="t-tabs" style="margin-left:auto">
+      <div class="t-tab active">Dashboard</div><div class="t-tab">Tools</div>
+      <div class="t-tab">About</div><div class="t-tab">Settings</div>
+    </div>
+    <div class="t-icons">
+      <svg class="t-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <svg class="t-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- ICON SIDEBAR -->
+    <div class="icon-sidebar">
+      <div class="i-btn active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div class="i-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div class="i-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <div class="i-btn" style="margin-top:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="i-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div>
+      <div class="i-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="i-btn" style="margin-top:auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    </div>
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="lp-header">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Star Catalogue
+      </div>
+      <div class="u-search">
+        <svg class="si" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search stars and playfields…" id="searchInput" oninput="onSearch()"/>
+        <button class="clr-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="s-status" id="sStatus">
+        <span id="sPillStar"></span><span id="sPillSep" style="display:none;color:var(--border-bright)">+</span><span id="sPillPf"></span>
+        <span style="flex:1"></span><span style="font-size:9px;color:var(--text-muted)" id="sHint"></span>
+      </div>
+      <div class="miller">
+        <div class="col-stars">
+          <div class="col-header">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Stars
+          </div>
+          <div class="col-list" id="starList"></div>
+          <div class="no-res" id="noRes">No matches</div>
+          <div class="col-footer" id="starFooter">75</div>
+        </div>
+        <div class="col-pfs">
+          <div class="pf-hdr">
+            <div class="pf-hdr-l">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+              <span class="pf-hdr-title">Playfields</span>
+              <span class="pf-hdr-star" id="pfHdrStar"></span>
+            </div>
+            <span class="pf-hdr-count" id="pfHdrCount" style="display:none"></span>
+          </div>
+          <div class="pf-filter" id="pfFilter">
+            <span class="pf-filter-lbl" id="pfFilterLbl"></span>
+            <span id="pfFilterTot"></span>
+          </div>
+          <div class="pf-list" id="pfList">
+            <div class="pf-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><p>Select a star</p></div>
+          </div>
+          <div class="pf-footer" id="pfFooter"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTRE PANE -->
+    <div class="centre-pane">
+      <!-- Context header (changes based on star/playfield selection) -->
+      <div id="ctxHeader" class="ctx-header" style="display:none"></div>
+
+      <!-- Body: POI list | POI detail -->
+      <div class="centre-body">
+        <!-- POI list column -->
+        <div class="poi-list-col">
+          <div class="poi-col-hdr">
+            <div class="poi-col-hdr-l">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              POIs
+            </div>
+            <span class="poi-col-count" id="poiColCount" style="display:none"></span>
+          </div>
+          <div class="poi-list" id="poiListEl">
+            <div class="poi-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><p>Select a playfield</p></div>
+          </div>
+          <div class="poi-col-footer" id="poiColFooter"></div>
+        </div>
+
+        <!-- POI detail area -->
+        <div class="poi-detail-area" id="poiDetailArea">
+          <div class="pod-empty" id="podEmpty">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <p>Select a POI to view details</p>
+          </div>
+          <div class="pod-content" id="podContent" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Empty state when nothing selected -->
+      <div class="ctx-empty" id="ctxEmpty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <p>Select a star system to begin</p>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="rp-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+        <p>Right panel — reserved for future use</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer">© 2026 EGS Trade Tool. All rights reserved.</div>
+</div>
+<div class="option-badge">Miller v3 — Real Data</div>
+
+<script>
+const RAW_STARS = [
+  {"ssid":1,"name":"Alpha","startype":"FStartingSystem","sector":{"x":0,"y":0,"z":0}},
+  {"ssid":2,"name":"Beta","startype":"GStartingSystem","sector":{"x":5000000,"y":-2000000,"z":8000000}},
+  {"ssid":3,"name":"Delta","startype":"Beacon","sector":{"x":19000000,"y":4000000,"z":-11000000}},
+  {"ssid":4,"name":"Gamma Prime","startype":"ZiraxHomeSystem","sector":{"x":-7000000,"y":3000000,"z":15000000}},
+  {"ssid":5,"name":"Void Station Kappa","startype":"Unknown","sector":{"x":22000000,"y":-9000000,"z":2000000}},
+  {"ssid":6,"name":"Unexplored-1","startype":"GStartingSystem","sector":{"x":-3000000,"y":1000000,"z":-6000000}},
+  {"ssid":7,"name":"Unexplored-2","startype":"FStartingSystem","sector":{"x":12000000,"y":-5000000,"z":9000000}}
+];
+const RAW_PFS   = [
+  {"name":"Tempest","planet_type":"Barren","map_type":0,"playfield_type":1,"system":"Alpha","pfid":101,"ssid":1,"gametime":1200},
+  {"name":"Alpha Orbit","planet_type":"Space","map_type":2,"playfield_type":2,"system":"Alpha","pfid":102,"ssid":1,"gametime":1205},
+  {"name":"Ironmoon","planet_type":"Rocky","map_type":0,"playfield_type":4,"system":"Alpha","pfid":103,"ssid":1,"gametime":1210},
+  {"name":"Verdant","planet_type":"Temperate","map_type":0,"playfield_type":1,"system":"Beta","pfid":201,"ssid":2,"gametime":2100},
+  {"name":"Beta Orbit","planet_type":"Space","map_type":3,"playfield_type":2,"system":"Beta","pfid":202,"ssid":2,"gametime":2105},
+  {"name":"Delta Prime","planet_type":"Lava","map_type":0,"playfield_type":1,"system":"Delta","pfid":301,"ssid":3,"gametime":3000},
+  {"name":"Trade Hub Nexus","planet_type":"Space","map_type":6,"playfield_type":2,"system":"Delta","pfid":302,"ssid":3,"gametime":3010},
+  {"name":"Sun Watch","planet_type":"Space","map_type":9,"playfield_type":2,"system":"Delta","pfid":303,"ssid":3,"gametime":3020},
+  {"name":"Dustmoon","planet_type":"Rocky","map_type":0,"playfield_type":4,"system":"Delta","pfid":304,"ssid":3,"gametime":3025},
+  {"name":"Gamma Homeworld","planet_type":"Alien","map_type":0,"playfield_type":1,"system":"Gamma Prime","pfid":401,"ssid":4,"gametime":4000},
+  {"name":"Gamma Orbit","planet_type":"Space","map_type":0,"playfield_type":2,"system":"Gamma Prime","pfid":402,"ssid":4,"gametime":4005},
+  {"name":"Kappa Station","planet_type":"Space","map_type":6,"playfield_type":2,"system":"Void Station Kappa","pfid":501,"ssid":5,"gametime":5000}
+];
+const RAW_POIS  = [
+  {"name":"Forward Operating Base Scorpio","faction":3,"type":2,"system":"Alpha","playfield":"Tempest","poiid":1001,"pfid":101,"ssid":1,"gametime":1250,"blueprint":"BA_MilitaryBase_T2"},
+  {"name":"Abandoned Mining Rig","faction":255,"type":2,"system":"Alpha","playfield":"Tempest","poiid":1002,"pfid":101,"ssid":1,"gametime":1260,"blueprint":"BA_MiningRig_Old"},
+  {"name":"Scout Vessel Aether","faction":2,"type":3,"system":"Alpha","playfield":"Alpha Orbit","poiid":1003,"pfid":102,"ssid":1,"gametime":1270,"blueprint":"SV_Scout_Light"},
+  {"name":"Warden Combat Vehicle Mk.III","faction":5,"type":4,"system":"Alpha","playfield":"Tempest","poiid":1004,"pfid":101,"ssid":1,"gametime":1280,"blueprint":"HV_Warden_Combat"},
+  {"name":"Patrol Cruiser Nemesis — Long Name Example That Should Truncate In The List","faction":3,"type":7,"system":"Beta","playfield":"Verdant","poiid":2001,"pfid":201,"ssid":2,"gametime":2150,"blueprint":"CV_PatrolCruiser_Heavy_T3_Zirax"},
+  {"name":"Research Outpost Verdant","faction":255,"type":2,"system":"Beta","playfield":"Verdant","poiid":2002,"pfid":201,"ssid":2,"gametime":2160,"blueprint":"BA_Research_Small"},
+  {"name":"Delta Trade Post","faction":255,"type":2,"system":"Delta","playfield":"Trade Hub Nexus","poiid":3001,"pfid":302,"ssid":3,"gametime":3050,"blueprint":"BA_TradePost_Hub"},
+  {"name":"Zirax Outpost Alpha-7","faction":1,"type":2,"system":"Delta","playfield":"Delta Prime","poiid":3002,"pfid":301,"ssid":3,"gametime":3060,"blueprint":"BA_Zirax_Outpost_T3"},
+  {"name":"HV Scavenger","faction":255,"type":4,"system":"Delta","playfield":"Delta Prime","poiid":3003,"pfid":301,"ssid":3,"gametime":3070,"blueprint":"HV_Scavenger_Basic"},
+  {"name":"Orbital Command Station","faction":1,"type":2,"system":"Gamma Prime","playfield":"Gamma Homeworld","poiid":4001,"pfid":401,"ssid":4,"gametime":4050,"blueprint":"BA_OrbitalCommand_Zirax"},
+  {"name":"Kappa Trade Exchange","faction":255,"type":2,"system":"Void Station Kappa","playfield":"Kappa Station","poiid":5001,"pfid":501,"ssid":5,"gametime":5050,"blueprint":"BA_TradeExchange_Large"}
+];
+
+
+// ── DATA LOOKUPS ──
+const starsByName = {};
+RAW_STARS.forEach(s => starsByName[s.name] = s);
+const starsBySSID = {};
+RAW_STARS.forEach(s => starsBySSID[s.ssid] = s);
+
+// Group playfields by ssid
+const pfsBySSID = {};
+RAW_PFS.forEach(pf => {
+  if (!pfsBySSID[pf.ssid]) pfsBySSID[pf.ssid] = [];
+  pfsBySSID[pf.ssid].push(pf);
+});
+
+// Group POIs by pfid
+const poisByPFID = {};
+RAW_POIS.forEach(p => {
+  if (!poisByPFID[p.pfid]) poisByPFID[p.pfid] = [];
+  poisByPFID[p.pfid].push(p);
+});
+
+// Build set of ssids that have playfields
+const ssidsWithPFs = new Set(RAW_PFS.map(p => p.ssid));
+
+// ── LABEL MAPS ──
+const PF_TYPE_LABELS  = {1:'Planet', 2:'Orbit', 4:'Moon'};
+const MAP_TYPE_LABELS = {0:'Standard', 2:'Asteroid Field', 3:'Asteroid Field', 6:'Trade Hub', 9:'Sun Orbit'};
+const POI_TYPE_LABELS = {2:'BA', 3:'SV', 4:'HV', 7:'CV'};
+const POI_TYPE_COLORS = {2:'#60a5fa', 3:'#34d399', 4:'#fbbf24', 7:'#f87171'};
+
+function factionLabel(f) {
+  return f === 255 ? 'None' : `ID ${f}`;
+}
+function factionClass(f) {
+  return f === 255 ? 'f-none' : 'f-other';
+}
+function fmtCoord(n) {
+  return n.toLocaleString();
+}
+
+// ── STATE ──
+let selStar = null; // ssid
+let selPF   = null; // pfid
+let selPOI  = null; // poiid
+let searchQ = '';
+
+// ── SEARCH FILTER ──
+function getFilteredResults(q) {
+  if (!q) return RAW_STARS.map(s => ({star:s, starMatch:false, pfMatches:null}));
+  const lq = q.toLowerCase();
+  return RAW_STARS.reduce((acc, star) => {
+    const sm = star.name.toLowerCase().includes(lq);
+    const pfs = pfsBySSID[star.ssid] || [];
+    const matchPFs = pfs.filter(p => p.name.toLowerCase().includes(lq));
+    if (sm || matchPFs.length > 0) {
+      acc.push({star, starMatch:sm, pfMatches: sm ? null : matchPFs.map(p=>p.pfid)});
+    }
+    return acc;
+  }, []);
+}
+
+// ── SEARCH HANDLERS ──
+function onSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  searchQ = q;
+  document.getElementById('clearBtn').classList.toggle('vis', q.length > 0);
+  selPF = null; selPOI = null;
+  const results = getFilteredResults(q);
+  if (q && results.length > 0 && !results.find(r => r.star.ssid === selStar)) {
+    selStar = results[0].star.ssid;
+  }
+  render();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  searchQ = '';
+  document.getElementById('clearBtn').classList.remove('vis');
+  render();
+}
+
+// ── MAIN RENDER ──
+function render() {
+  const q = searchQ;
+  const results = getFilteredResults(q);
+
+  // Status bar
+  const ss = document.getElementById('sStatus');
+  if (q) {
+    const starHits = results.filter(r=>r.starMatch).length;
+    const pfHits   = results.filter(r=>!r.starMatch).reduce((a,r)=>a+(r.pfMatches||[]).length,0);
+    document.getElementById('sPillStar').innerHTML = starHits ? `<span class="s-pill star">★ ${starHits}</span>` : '';
+    document.getElementById('sPillPf').innerHTML   = pfHits   ? `<span class="s-pill pf">◎ ${pfHits}</span>`   : '';
+    document.getElementById('sPillSep').style.display = (starHits && pfHits) ? '' : 'none';
+    document.getElementById('sHint').textContent = results.length===0 ? 'no matches' : '';
+    ss.classList.add('vis');
+  } else { ss.classList.remove('vis'); }
+
+  // Star column
+  const starList = document.getElementById('starList');
+  const noRes    = document.getElementById('noRes');
+  starList.innerHTML = '';
+  if (q && results.length === 0) {
+    noRes.classList.add('vis');
+  } else {
+    noRes.classList.remove('vis');
+    results.forEach(({star, starMatch, pfMatches}) => {
+      const isSel = selStar === star.ssid;
+      const hasPFs = ssidsWithPFs.has(star.ssid);
+      const div = document.createElement('div');
+      div.className = 's-item' + (isSel?' sel':'') + (!hasPFs?' no-pf':'');
+      const dotClass = q ? (starMatch?'star-c':'pf-c') : '';
+      div.innerHTML = `<span class="s-name">${star.name}</span>${q?`<span class="s-dot ${dotClass}"></span>`:''}` +
+        `<svg class="s-arr" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
+      div.onclick = () => selectStar(star.ssid);
+      starList.appendChild(div);
+    });
+  }
+  document.getElementById('starFooter').textContent = q ? `${results.length}` : `${RAW_STARS.length}`;
+
+  renderPFColumn(results);
+  renderCtxHeader();
+  renderPOIList();
+  renderPOIDetail();
+}
+
+function renderPFColumn(results) {
+  const q = searchQ;
+  const pfList = document.getElementById('pfList');
+  const pfHdrStar = document.getElementById('pfHdrStar');
+  const pfHdrCount = document.getElementById('pfHdrCount');
+  const pfFooter = document.getElementById('pfFooter');
+  const pfFilter = document.getElementById('pfFilter');
+
+  if (!selStar) {
+    pfHdrStar.textContent = '';
+    pfHdrCount.style.display = 'none';
+    pfFooter.textContent = '';
+    pfFilter.classList.remove('vis');
+    pfList.innerHTML = '<div class="pf-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><p>Select a star</p></div>';
+    return;
+  }
+
+  const star = starsBySSID[selStar];
+  pfHdrStar.textContent = star.name;
+  const allPFs = pfsBySSID[selStar] || [];
+
+  const matchEntry = results ? results.find(r=>r.star.ssid===selStar) : null;
+  const restrictedPFIDs = matchEntry ? matchEntry.pfMatches : (q ? [] : null);
+  const pfsToShow = restrictedPFIDs === null ? allPFs : allPFs.filter(p=>restrictedPFIDs.includes(p.pfid));
+
+  pfHdrCount.textContent = pfsToShow.length;
+  pfHdrCount.style.display = 'inline';
+  pfFooter.textContent = pfsToShow.length + ' playfield' + (pfsToShow.length!==1?'s':'');
+
+  if (q && restrictedPFIDs !== null) {
+    pfFilter.classList.add('vis');
+    document.getElementById('pfFilterLbl').textContent = `${pfsToShow.length} of ${allPFs.length} match`;
+    document.getElementById('pfFilterTot').textContent = `"${q}"`;
+  } else if (q && restrictedPFIDs === null) {
+    pfFilter.classList.add('vis');
+    document.getElementById('pfFilterLbl').textContent = 'star match';
+    document.getElementById('pfFilterTot').textContent = `all ${allPFs.length} shown`;
+  } else { pfFilter.classList.remove('vis'); }
+
+  pfList.innerHTML = '';
+  if (!ssidsWithPFs.has(selStar)) {
+    pfList.innerHTML = '<div class="pf-empty"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>No playfields discovered</p></div>';
+    return;
+  }
+  if (pfsToShow.length === 0) {
+    pfList.innerHTML = '<div class="pf-empty"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg><p>No matching playfields</p></div>';
+    return;
+  }
+
+  pfsToShow.forEach(pf => {
+    const isSel = selPF === pf.pfid;
+    const isSearchMatch = q && pf.name.toLowerCase().includes(q.toLowerCase());
+    const poiCount = (poisByPFID[pf.pfid]||[]).length;
+    const div = document.createElement('div');
+    div.className = 'pf-item' + (isSel?' sel':'') + (isSearchMatch?' sm':'');
+    div.innerHTML = `<div class="pf-info"><span class="pf-name">${pf.name}</span><span class="pf-type">${pf.planet_type}</span></div><span class="pf-badge">${poiCount}</span>`;
+    div.onclick = () => selectPF(pf.pfid);
+    pfList.appendChild(div);
+  });
+}
+
+function renderCtxHeader() {
+  const hdr = document.getElementById('ctxHeader');
+  const empty = document.getElementById('ctxEmpty');
+  const centreBody = document.querySelector('.centre-body');
+
+  if (!selStar) {
+    hdr.style.display = 'none';
+    centreBody.style.display = 'none';
+    empty.style.display = 'flex';
+    return;
+  }
+
+  empty.style.display = 'none';
+  centreBody.style.display = 'flex';
+  hdr.style.display = 'block';
+  const star = starsBySSID[selStar];
+
+  if (!selPF) {
+    // Star context
+    const s = star.sector;
+    hdr.innerHTML = `
+      <div class="star-ctx-name">${star.name}</div>
+      <div class="star-ctx-meta">
+        <span class="ctx-tag">${star.startype}</span>
+        <div class="ctx-coords">
+          <div class="ctx-coord"><span class="ctx-coord-lbl">X</span><span class="ctx-coord-val">${fmtCoord(s.x)}</span></div>
+          <div class="ctx-coord"><span class="ctx-coord-lbl">Y</span><span class="ctx-coord-val">${fmtCoord(s.y)}</span></div>
+          <div class="ctx-coord"><span class="ctx-coord-lbl">Z</span><span class="ctx-coord-val">${fmtCoord(s.z)}</span></div>
+        </div>
+      </div>`;
+  } else {
+    // Playfield context
+    const pf = RAW_PFS.find(p => p.pfid === selPF);
+    hdr.innerHTML = `
+      <div class="pf-ctx-sup"><span class="star-link">${star.name}</span><span class="pf-ctx-startype">${star.startype}</span></div>
+      <div class="pf-ctx-name">
+        ${pf.name}
+        <span class="pf-ctx-id">#${pf.pfid}</span>
+      </div>
+      <div class="pf-ctx-meta">
+        <div class="pf-meta-block">
+          <span class="pf-meta-lbl">Type</span>
+          <span class="pf-meta-val">${pf.planet_type}</span>
+        </div>
+        <div class="pf-meta-divider"></div>
+        <div class="pf-meta-block">
+          <span class="pf-meta-lbl">Map Type</span>
+          <span class="pf-meta-val">${MAP_TYPE_LABELS[pf.map_type] || pf.map_type} <span style="color:var(--text-muted);font-size:10px">(${pf.map_type})</span></span>
+        </div>
+        <div class="pf-meta-divider"></div>
+        <div class="pf-meta-block">
+          <span class="pf-meta-lbl">Classification</span>
+          <span class="pf-meta-val">${PF_TYPE_LABELS[pf.playfield_type] || pf.playfield_type} <span style="color:var(--text-muted);font-size:10px">(${pf.playfield_type})</span></span>
+        </div>
+        <div class="pf-meta-divider"></div>
+        <div class="pf-meta-block">
+          <span class="pf-meta-lbl">Location</span>
+          <div class="ctx-coords" style="font-size:12px">
+            <div class="ctx-coord"><span class="ctx-coord-lbl">X</span><span class="ctx-coord-val">${fmtCoord(star.sector.x)}</span></div>
+            <div class="ctx-coord"><span class="ctx-coord-lbl">Y</span><span class="ctx-coord-val">${fmtCoord(star.sector.y)}</span></div>
+            <div class="ctx-coord"><span class="ctx-coord-lbl">Z</span><span class="ctx-coord-val">${fmtCoord(star.sector.z)}</span></div>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function renderPOIList() {
+  const listEl   = document.getElementById('poiListEl');
+  const countEl  = document.getElementById('poiColCount');
+  const footerEl = document.getElementById('poiColFooter');
+
+  if (!selPF) {
+    countEl.style.display = 'none';
+    footerEl.textContent = '';
+    listEl.innerHTML = '<div class="poi-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><p>Select a playfield</p></div>';
+    return;
+  }
+
+  const pois = poisByPFID[selPF] || [];
+  countEl.textContent = pois.length;
+  countEl.style.display = 'inline';
+  footerEl.textContent = pois.length + ' POI' + (pois.length!==1?'s':'');
+
+  listEl.innerHTML = '';
+  if (!pois.length) {
+    listEl.innerHTML = '<div class="poi-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>No POIs in this playfield</p></div>';
+    return;
+  }
+
+  pois.forEach(poi => {
+    const isSel = selPOI === poi.poiid;
+    const color = POI_TYPE_COLORS[poi.type] || '#7a9abf';
+    const div = document.createElement('div');
+    div.className = 'poi-item' + (isSel?' sel':'');
+    div.innerHTML = `
+      <div class="poi-item-l">
+        <span class="poi-type-dot" style="background:${color}"></span>
+        <span class="poi-item-name" title="${poi.name}">${poi.name}</span>
+      </div>
+      <span class="poi-item-id">${poi.poiid}</span>`;
+    div.onclick = () => selectPOI(poi.poiid);
+    listEl.appendChild(div);
+  });
+}
+
+function renderPOIDetail() {
+  const empty   = document.getElementById('podEmpty');
+  const content = document.getElementById('podContent');
+
+  if (!selPOI || !selPF) {
+    empty.style.display = 'flex';
+    content.style.display = 'none';
+    return;
+  }
+
+  const pois = poisByPFID[selPF] || [];
+  const poi  = pois.find(p => p.poiid === selPOI);
+  if (!poi) { empty.style.display='flex'; content.style.display='none'; return; }
+
+  const star = starsBySSID[selStar];
+  const pf   = RAW_PFS.find(p => p.pfid === selPF);
+  const typeLabel = POI_TYPE_LABELS[poi.type] || poi.type;
+  const typeColor = POI_TYPE_COLORS[poi.type] || '#7a9abf';
+
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  content.innerHTML = `
+    <div class="pod-header">
+      <div class="pod-name-row">
+        <span class="pod-name">${poi.name}</span>
+        <span class="pod-blueprint">${poi.blueprint}</span>
+      </div>
+      <div class="pod-attr-row">
+        <div class="pod-attr-item">
+          <span class="pod-attr-lbl">Faction</span>
+          <span class="pod-attr-val"><span class="faction-badge ${factionClass(poi.faction)}">${factionLabel(poi.faction)}</span></span>
+        </div>
+        <div class="pod-attr-item">
+          <span class="pod-attr-lbl">Type</span>
+          <span class="pod-attr-val"><span class="type-badge"><span style="width:6px;height:6px;border-radius:50%;background:${typeColor};display:inline-block"></span>${typeLabel}</span></span>
+        </div>
+        <div class="pod-attr-item">
+          <span class="pod-attr-lbl">POI ID</span>
+          <span class="pod-attr-val" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent-bright)">${poi.poiid}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── SELECTION HANDLERS ──
+function selectStar(ssid) {
+  selStar = ssid; selPF = null; selPOI = null;
+  const results = getFilteredResults(searchQ);
+  renderPFColumn(results);
+  renderCtxHeader();
+  renderPOIList();
+  renderPOIDetail();
+  document.querySelectorAll('.s-item').forEach(el => {
+    const nm = el.querySelector('.s-name').textContent;
+    const s  = RAW_STARS.find(x=>x.name===nm);
+    el.classList.toggle('sel', s && s.ssid===ssid);
+  });
+}
+function selectPF(pfid) {
+  selPF = pfid; selPOI = null;
+  const results = getFilteredResults(searchQ);
+  renderPFColumn(results);
+  renderCtxHeader();
+  renderPOIList();
+  renderPOIDetail();
+}
+function selectPOI(poiid) {
+  selPOI = poiid;
+  renderPOIList();
+  renderPOIDetail();
+}
+
+// ── INIT ──
+render();
+// Pre-select Delta (ssid=3)
+selectStar(3);
+</script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EGS Trade Tool v2 — Commodity Finder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-base:#0b0f1a;--bg-panel:#111827;--bg-raised:#1a2236;
+  --bg-hover:#1e2d45;--bg-selected:#1a3a5c;--bg-sel-row:#152d4a;
+  --border:#1f2d42;--border-bright:#2a4060;
+  --text-primary:#e0eaf8;--text-secondary:#7a9abf;--text-muted:#4a6480;
+  --accent:#3b82f6;--accent-dim:#1e40af;--accent-glow:rgba(59,130,246,0.15);--accent-bright:#60a5fa;
+  --badge-bg:#162032;--header-bg:#0d1524;
+  --match-item:#fbbf24;--match-trader:#60a5fa;
+  --sell-col:#38bdf8;--buy-col:#fbbf24;
+  --col-item:155px;--col-trader:330px;
+}
+html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:13px;overflow:hidden}
+.shell{display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:16px;padding:0 16px;height:48px;flex-shrink:0;background:var(--header-bg);border-bottom:1px solid var(--border)}
+.topbar-logo{font-size:15px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.topbar-logo span{color:var(--accent-bright)}
+.tsw{position:relative;flex:1;max-width:280px;margin-left:8px}
+.tsw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.tsw input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 10px 0 30px;height:30px;color:var(--text-secondary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none}
+.topbar-tabs{display:flex;gap:2px;margin-left:auto}
+.topbar-tab{padding:0 14px;height:30px;border-radius:4px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center}
+.topbar-tab.active{background:var(--accent-dim);color:var(--accent-bright)}
+.body{display:flex;flex:1;overflow:hidden}
+.icon-sidebar{width:44px;flex-shrink:0;background:var(--header-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px}
+.icon-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;position:relative}
+.icon-btn.active{background:var(--accent-glow);color:var(--accent-bright)}
+.icon-btn.active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:2px;background:var(--accent);border-radius:0 2px 2px 0}
+.left-panel{width:calc(var(--col-item) + var(--col-trader) + 1px);flex-shrink:0;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.lp-header{height:37px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-secondary);text-transform:uppercase;display:flex;align-items:center;gap:6px;padding:0 14px;background:var(--header-bg)}
+.lp-header svg{color:var(--accent)}
+.browse-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--header-bg)}
+.browse-tab{flex:1;height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;gap:5px}
+.browse-tab.active{color:var(--accent-bright);border-bottom-color:var(--accent)}
+.search-wrap{padding:6px 10px;flex-shrink:0;border-bottom:1px solid var(--border);position:relative}
+.search-wrap svg.si{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.search-wrap input{width:100%;background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:0 28px 0 28px;height:28px;color:var(--text-primary);font-family:'Exo 2',sans-serif;font-size:12px;outline:none}
+.clear-btn{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--text-muted);cursor:pointer;background:none;border:none;font-size:13px;display:none}
+.clear-btn.show{display:block}
+.status-strip{display:none;align-items:center;gap:6px;padding:3px 12px;height:22px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--header-bg)}
+.status-strip.show{display:flex}
+.spill{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
+.spill.a{background:rgba(251,191,36,0.1);color:var(--match-item);border:1px solid rgba(251,191,36,0.2)}
+.spill.b{background:rgba(96,165,250,0.1);color:var(--match-trader);border:1px solid rgba(96,165,250,0.2)}
+.miller{display:flex;flex:1;overflow:hidden;gap:1px;background:var(--border)}
+.col-shell{display:flex;flex-direction:column;background:var(--bg-panel);overflow:hidden}
+.col-shell.col1{width:var(--col-item);flex-shrink:0}
+.col-shell.col2{width:var(--col-trader);flex-shrink:0;border-left:1px solid var(--border)}
+.col-hdr{height:24px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--header-bg);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);gap:4px;overflow:hidden;white-space:nowrap}
+.col-hdr-dyn{font-size:9px;font-weight:600;color:var(--accent-bright);overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.col-list{flex:1;overflow-y:auto}
+.col-ftr{height:20px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;border-top:1px solid var(--border);font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--text-muted);background:var(--bg-raised)}
+.list-row{display:flex;align-items:center;gap:3px;padding:4px 6px 4px 8px;cursor:pointer;border-left:2px solid transparent;min-height:38px;background:var(--bg-panel)}
+.list-row:hover{background:var(--bg-hover)}
+.list-row.sel{background:var(--bg-selected);border-left-color:var(--accent)}
+.lr-body{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.lr-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr-int{font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row.sel .lr-name{color:var(--accent-bright);font-weight:600}
+.lr-badge{font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text-muted);flex-shrink:0;height:14px;line-height:14px;min-width:18px;text-align:center}
+.list-row.sel .lr-badge{color:var(--accent-bright);border-color:var(--accent-dim);background:rgba(59,130,246,0.12)}
+.lr-arrow{color:var(--text-muted);flex-shrink:0;opacity:0}
+.list-row.sel .lr-arrow{color:var(--accent-bright);opacity:1}
+.mdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dot-a{background:var(--match-item)}
+.dot-b{background:var(--match-trader)}
+.mc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;cursor:pointer;border-left:2px solid transparent;min-height:42px;background:var(--bg-panel);border-bottom:1px solid var(--border)}
+.mc-row:hover{background:var(--bg-hover)}
+.mc-row.sel{background:var(--bg-selected);border-left-color:var(--accent)}
+.mc-row-info{flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;min-width:0}
+.mc-row-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-row-int{font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-row.sel .mc-row-name{color:var(--accent-bright);font-weight:600}
+.mc-badges{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.col2-subhdr-cols{display:flex;gap:8px}
+.col2-subhdr-col{width:72px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0}
+.col2-subhdr-col.sell{color:var(--sell-col)}
+.col2-subhdr-col.buy{color:var(--buy-col)}
+.badge-group{display:flex;flex-direction:column;align-items:center;width:72px;flex-shrink:0;background:var(--bg-base);border-radius:4px;padding:3px 0}
+.badge-price{font-size:12px;font-family:'Share Tech Mono',monospace;font-weight:600;text-align:center}
+.badge-price.sell{color:var(--sell-col)}
+.badge-price.buy{color:var(--buy-col)}
+.badge-qty{font-size:9px;font-family:'Share Tech Mono',monospace;margin-top:1px;text-align:center}
+.badge-qty.sell{color:rgba(56,189,248,0.65)}
+.badge-qty.buy{color:rgba(251,191,36,0.65)}
+.badge-dash{font-size:14px;color:var(--border-bright);font-family:'Share Tech Mono',monospace;text-align:center;line-height:1}
+.col-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 12px;color:var(--text-muted);font-size:10px;height:100%;text-align:center}
+.centre{flex:1;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.ctx-hdr{padding:16px;border-bottom:1px solid var(--border);background:var(--header-bg);display:flex;flex-direction:column;flex-shrink:0;min-height:90px;justify-content:center}
+.ctx-hdr-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:11px;gap:8px}
+.ch-sup{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ch-int{font-size:10px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;background:var(--bg-raised);padding:2px 6px;border-radius:3px;border:1px solid var(--border)}
+.ch-name{font-size:20px;font-weight:700;color:var(--text-primary);line-height:1.15;margin-bottom:8px;display:flex;align-items:baseline;gap:8px}
+.ch-sub{font-size:11px;color:var(--text-secondary);font-style:italic;line-height:1.4;margin-bottom:10px}
+.ch-attr-row{display:flex;align-items:center;gap:16px}
+.ch-attr{display:flex;flex-direction:column;gap:2px}
+.ch-attr-lbl{font-size:9px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+.ch-attr-val{font-size:12px;color:var(--accent-bright);font-family:'Share Tech Mono',monospace}
+.ch-div{width:1px;height:24px;background:var(--border);flex-shrink:0}
+.c-body{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--bg-base)}
+.c-body-msg{margin:auto;color:var(--text-muted);font-size:11px;font-style:italic;display:flex;align-items:center;gap:8px}
+.c-table{width:100%;border-collapse:collapse;font-size:11px}
+.c-table th{text-align:left;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg-raised);color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0}
+.c-table td{padding:10px 16px;border-bottom:1px solid var(--border);color:var(--text-secondary)}
+.c-table tr{cursor:pointer}
+.c-table tr:hover td{background:var(--bg-hover);color:var(--text-primary)}
+.td-name{font-weight:600;color:var(--text-primary);display:block;margin-bottom:2px}
+.td-sub{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--text-muted)}
+.td-num{font-family:'Share Tech Mono',monospace;text-align:right}
+.c-table th.right{text-align:right}
+.right-panel{width:240px;flex-shrink:0;display:flex;flex-direction:column;background:var(--bg-base)}
+.rp-hdr{height:37px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text-secondary);text-transform:uppercase;display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--header-bg)}
+.rp-hdr svg{color:var(--accent)}
+.rp-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.rp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px 14px;color:var(--text-muted);font-size:10px;text-align:center}
+.rp-section{display:flex;flex-direction:column;gap:8px}
+.rp-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted)}
+.rp-dest-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:4px;padding:10px}
+.rp-dest-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.rp-dest-name{font-size:11px;font-weight:600;color:var(--text-primary);line-height:1.2}
+.rp-dest-loc{font-size:9px;color:var(--text-secondary);margin-bottom:6px}
+.faction-badge{font-size:8px;padding:2px 5px;border-radius:3px;text-transform:uppercase;font-weight:bold;letter-spacing:.05em;font-family:'Share Tech Mono',monospace}
+.faction-pol{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+.faction-zir{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+.faction-tal{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
+.faction-neu{background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.3)}
+.rp-colocated{margin-top:8px;font-size:9px;color:var(--text-muted);border-top:1px dashed var(--border);padding-top:6px}
+.rp-colocated span{color:var(--accent-bright);cursor:pointer;font-weight:500}
+.rp-colocated span:hover{text-decoration:underline}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="topbar-logo">EGS<span>Trade</span></div>
+    <div class="tsw">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Set current star…"/>
+    </div>
+    <div class="topbar-tabs">
+      <div class="topbar-tab active">Dashboard</div>
+      <div class="topbar-tab">Tools</div>
+      <div class="topbar-tab">About</div>
+      <div class="topbar-tab">Settings</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="icon-sidebar">
+      <div class="icon-btn" title="Star Catalogue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+      <div class="icon-btn" title="POI Finder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div class="icon-btn active" title="Commodity Finder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+      <div class="icon-btn" title="Bookmarks"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></div>
+      <div style="flex:1"></div>
+      <div class="icon-btn" title="About"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+    </div>
+
+    <div class="left-panel">
+      <div class="lp-header"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Commodity Finder</div>
+      <div class="browse-tabs">
+        <div class="browse-tab active" id="tabItems" onclick="setMode('items')">Items</div>
+        <div class="browse-tab" id="tabTraders" onclick="setMode('traders')">Traders</div>
+      </div>
+      <div class="search-wrap">
+        <svg class="si" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="srchInput" placeholder="Search items &amp; traders…" oninput="onSearch()"/>
+        <button class="clear-btn" id="clearBtn" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="status-strip" id="statusStrip">
+        <span id="pillA"></span><span id="sep" style="color:var(--border-bright)">·</span><span id="pillB"></span>
+      </div>
+      <div class="miller">
+        <div class="col-shell col1">
+          <div class="col-hdr" id="col1Hdr">Items</div>
+          <div class="col-list" id="col1List"></div>
+          <div class="col-ftr" id="col1Ftr">—</div>
+        </div>
+        <div class="col-shell col2">
+          <div class="col-hdr" id="col2Hdr">
+            <span class="col-hdr-dyn" id="col2HdrTxt">Traders</span>
+            <div class="col2-subhdr-cols">
+              <div class="col2-subhdr-col sell">▼ Sell</div>
+              <div class="col2-subhdr-col buy">▲ Buy</div>
+            </div>
+          </div>
+          <div class="col-list" id="col2List"></div>
+          <div class="col-ftr" id="col2Ftr">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="centre">
+      <div class="ctx-hdr" id="ctxHdr">
+        <div class="ctx-hdr-empty" id="ctxEmpty">Select an entry from the panel to begin</div>
+        <div id="ctxContent" style="display:none;flex-direction:column;height:100%"></div>
+      </div>
+      <div class="c-body" id="cBody"></div>
+    </div>
+
+    <div class="right-panel">
+      <div class="rp-hdr"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Destination Cards</div>
+      <div class="rp-body" id="rpBody"></div>
+    </div>
+  </div>
+</div>
+<script>
+// Display name maps
+const ID={CannedVegetables:'Canned Vegetables',CannedMeat:'Canned Meat',AutoMinerCore:'Auto Miner Core',SmallOptronicBridge:'Small Optronic Bridge',SmallOptronicMatrix:'Small Optronic Matrix',LargeOptronicBridge:'Large Optronic Bridge',LargeOptronicMatrix:'Large Optronic Matrix',FluxCoil:'Flux Coil',EnergyDrink:'Energy Drink',FruitJuice:'Fruit Juice',WaterBottle:'Water Bottle',WorkClothing:'Work Clothing',MiningEquipment:'Mining Equipment',RadiationBoost:'Radiation Boost',DrillCharge:'Drill Charge',EmergencyRations:'Emergency Rations',PowerCoil:'Power Coil',AdvancedUpgradeKit:'Advanced Upgrade Kit',CPUExtenderSVT2:'CPU Extender SV T2',CPUExtenderHVT2:'CPU Extender HV T2',CPUExtenderCVT2:'CPU Extender CV T2',CPUExtenderBAT2:'CPU Extender BA T2','Token:6101':'Polaris Trade Token','Token:6102':'Zirax Trade Token',PistolT2:'Pistol T2',Shotgun2:'Shotgun T2',ShotgunPolaris:'Polaris Shotgun',Sniper2:'Sniper Rifle T2',RocketLauncher:'Rocket Launcher',MultiToolT2:'Multi-Tool T2',DrillT2:'Drill T2',Bandages:'Bandages',Medikit02:'Medikit T2',Pistol:'Pistol',Shotgun:'Shotgun',Electronics:'Electronics',Computer:'Computer',Oscillator:'Oscillator',Superconductor:'Superconductor',Minigun:'Minigun',Coffee:'Coffee',Liquors:'Liquors'};
+const TD={TraderDefault:'General Trader',Bertrams:"Bertram's Arms",ColonySmallFood:'Cook',ColonyLargeFood:'Cook',Slaver:'Slaver',TalonBasicsAndCommodities:"Tal'on Merchant",Eden_FactoryTraFood:'Food Factory Manager',QuantumSTAR:'QuantumSTAR',AdvancedWeaponToolsKits:'Advanced Weapon Tools Kits',MACorp:'MACorp',InterWeap:'InterWeap','Artemis Commodities':'Artemis Commodities','Heliopolis Trade Co':'Heliopolis Trade Co','The Ammo Bandit':'The Ammo Bandit',MilitaryT3:'Military T3','Totally Overpowered':'Totally Overpowered'};
+const id=n=>ID[n]||(n.replace(/([A-Z])/g,' $1').trim());
+const td=n=>TD[n]||n;
+const fMap={pol:{n:'Polaris',c:'faction-pol'},zir:{n:'Zirax',c:'faction-zir'},tal:{n:'Talon',c:'faction-tal'},neu:{n:'Neutral',c:'faction-neu'}};
+
+// Data with mock volume/mass added
+const ITEMS=[
+  {i:'CannedVegetables',v:'0.2',m:'0.5',b:'45',n:7,ts:[
+    {i:'TraderDefault',sp:'100-150',sq:'3-5',bp:'85-150',bq:'55-150'},{i:'Bertrams',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'},{i:'ColonySmallFood',sp:'mf=1.0-1.25',sq:'50-100',bp:'0',bq:'0'},{i:'ColonyLargeFood',sp:'mf=1.0-1.25',sq:'50-100',bp:'0',bq:'0'},{i:'Slaver',sp:'0',sq:'0',bp:'mf=0.5-0.75',bq:'50-200'},{i:'TalonBasicsAndCommodities',sp:'mf=1.0-1.25',sq:'5-10',bp:'mf=0.5-0.75',bq:'15-90'},{i:'Eden_FactoryTraFood',sp:'mf=1-1.25',sq:'5-20',bp:'',bq:''}
+  ]},
+  {i:'AutoMinerCore',v:'25.0',m:'150',b:'12000',n:28,ts:[
+    {i:'QuantumSTAR',sp:'mf=1.0-1.25',sq:'10-50',bp:'mf=0.5-0.75',bq:'55-70'},{i:'Artemis Commodities',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-10'},{i:'MACorp',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-15'},{i:'Bertrams',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'},{i:'Heliopolis Trade Co',sp:'mf=1.0-1.25',sq:'5-10',bp:'mf=0.5-0.75',bq:'10-30'}
+  ]},
+  {i:'DrillT2',v:'3.5',m:'12.0',b:'3400',n:38,ts:[
+    {i:'MACorp',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-15'},{i:'AdvancedWeaponToolsKits',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-15'},{i:'Bertrams',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'}
+  ]}
+];
+
+// Data with mock factions and colocations added
+const TRADERS=[
+  {i:'QuantumSTAR',g:'trwSpecial',st:"High-end electronics and computer systems.",
+   fa:[{n:'Asteroid Station',b:'R2BAO_AsteroidStation02',l:'Bethi Alpha',f:'pol',ct:['MACorp']},{n:'Refinery Station',b:'R2BAO_AsteroidStation01',l:'Chalkophe',f:'neu',ct:[]}],
+   its:[{i:'AutoMinerCore',sp:'mf=1.0-1.25',sq:'10-50',bp:'mf=0.5-0.75',bq:'55-70'},{i:'Computer',sp:'mf=1.0-1.25',sq:'100-1250',bp:'mf=0.5-0.75',bq:'55-1350'}]},
+  {i:'Bertrams',g:'trwAmmo,trwWeaponsBasic',st:"Weapons, ammo, and survival gear.",
+   fa:[{n:'Trade Station CZ108K',b:'R2BA_PolTradeStation02',l:'Delta Orbit',f:'pol',ct:['AdvancedWeaponToolsKits']},{n:'Trade Station CB802N',b:'R2BA_PolTradeStation01',l:'Chalkophe',f:'pol',ct:['MACorp','QuantumSTAR']}],
+   its:[{i:'CannedVegetables',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'},{i:'AutoMinerCore',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'},{i:'DrillT2',sp:'mf=1.0-1.25',sq:'50-100',bp:'mf=0.5-0.75',bq:'150-500'}]},
+  {i:'MACorp',g:'trwResources',st:'Essential mining and construction resources.',
+   fa:[{n:'Trade Station CB802N',b:'R2BA_PolTradeStation01',l:'Delta III',f:'pol',ct:['Bertrams']}],
+   its:[{i:'AutoMinerCore',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-15'},{i:'DrillT2',sp:'mf=1.0-1.25',sq:'1-5',bp:'mf=0.5-0.75',bq:'5-15'}]},
+  {i:'TraderDefault',g:'trwFood',st:'Basic civilian goods and commodities.',
+   fa:[{n:'Market',b:'R2BA_TalonMarket02',l:'Delta III',f:'tal',ct:[]},{n:'Civilian Outpost',b:'CivilianHub',l:'Bethi Alpha',f:'neu',ct:['Slaver']}],
+   its:[{i:'CannedVegetables',sp:'100-150',sq:'3-5',bp:'85-150',bq:'55-150'}]},
+];
+
+let mode='items', sel1=null, sel2=null, q='';
+
+const hs=t=>t.sp&&t.sp!=='0';
+const hb=t=>t.bp&&t.bp!=='0';
+const gshort=g=>g.split(',').map(s=>s.replace('trw','').replace(/([A-Z])/g,' $1').trim()).join(' · ');
+
+function setMode(m){
+  mode=m;sel1=null;sel2=null;q='';
+  document.getElementById('srchInput').value='';
+  document.getElementById('clearBtn').classList.remove('show');
+  document.getElementById('tabItems').classList.toggle('active',m==='items');
+  document.getElementById('tabTraders').classList.toggle('active',m==='traders');
+  document.getElementById('srchInput').placeholder=m==='items'?'Search items & traders…':'Search traders & items…';
+  render();
+}
+function pivotTo(m, target){
+  setMode(m);
+  sel1=target;
+  render();
+}
+function onSearch(){q=document.getElementById('srchInput').value.trim();document.getElementById('clearBtn').classList.toggle('show',q.length>0);sel2=null;render();}
+function clearSearch(){q='';document.getElementById('srchInput').value='';document.getElementById('clearBtn').classList.remove('show');render();}
+
+function render(){renderMiller();renderCentre();renderRight();}
+
+function renderMiller(){
+  mode==='items'?renderItemsMiller():renderTradersMiller();
+}
+
+function renderItemsMiller(){
+  const ql=q.toLowerCase();
+  let fi=ITEMS;
+  if(ql)fi=ITEMS.filter(x=>x.i.toLowerCase().includes(ql)||id(x.i).toLowerCase().includes(ql)||x.ts.some(t=>t.i.toLowerCase().includes(ql)||td(t.i).toLowerCase().includes(ql)));
+
+  const ss=document.getElementById('statusStrip');
+  if(ql){
+    const ih=fi.filter(x=>x.i.toLowerCase().includes(ql)||id(x.i).toLowerCase().includes(ql)).length;
+    const th=fi.length-ih;
+    document.getElementById('pillA').innerHTML=ih?`<span class="spill a">◈ ${ih} item${ih!==1?'s':''}</span>`:'';
+    document.getElementById('pillB').innerHTML=th?`<span class="spill b">◉ ${th} via trader</span>`:'';
+    document.getElementById('sep').style.display=(ih&&th)?'':'none';
+    ss.classList.add('show');
+  }else ss.classList.remove('show');
+
+  const l1=document.getElementById('col1List');l1.innerHTML='';
+  fi.forEach(x=>{
+    const sel=sel1===x.i;
+    const im=ql&&(x.i.toLowerCase().includes(ql)||id(x.i).toLowerCase().includes(ql));
+    const tm=ql&&!im;
+    const div=document.createElement('div');div.className='list-row'+(sel?' sel':'');
+    const dot=ql?`<span class="mdot ${im?'dot-a':tm?'dot-b':''}"></span>`:'';
+    div.innerHTML=`${dot}<div class="lr-body"><span class="lr-name" title="${id(x.i)}">${id(x.i)}</span><span class="lr-int">${x.i}</span></div><span class="lr-badge">${x.n}</span><svg class="lr-arrow" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
+    div.onclick=()=>{sel1=x.i;sel2=null;render();};
+    l1.appendChild(div);
+  });
+  document.getElementById('col1Ftr').textContent=fi.length+' item'+(fi.length!==1?'s':'');
+
+  const h2t=document.getElementById('col2HdrTxt');
+  const l2=document.getElementById('col2List');const f2=document.getElementById('col2Ftr');
+  if(!sel1){
+    l2.innerHTML='<div class="col-empty"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Select an item</p></div>';
+    f2.textContent='—';h2t.textContent='Traders';h2t.style.color='var(--text-muted)';return;
+  }
+  const itd=ITEMS.find(x=>x.i===sel1);if(!itd)return;
+  h2t.textContent=id(sel1);h2t.style.color='var(--accent-bright)';
+  l2.innerHTML='';
+  itd.ts.forEach(t=>{
+    const sel=sel2===t.i;const m2=ql&&(t.i.toLowerCase().includes(ql)||td(t.i).toLowerCase().includes(ql));
+    const div=document.createElement('div');div.className='mc-row'+(sel?' sel':'')+(m2?' shi':'');
+    let sellHtml=hs(t)?`<div class="badge-group"><div class="badge-price sell">${t.sp}</div><div class="badge-qty sell">Qty: ${t.sq}</div></div>`:`<div class="badge-group"><div class="badge-dash">—</div></div>`;
+    let buyHtml=hb(t)?`<div class="badge-group"><div class="badge-price buy">${t.bp}</div><div class="badge-qty buy">Qty: ${t.bq}</div></div>`:`<div class="badge-group"><div class="badge-dash">—</div></div>`;
+    div.innerHTML=`<div class="mc-row-info"><span class="mc-row-name" title="${td(t.i)}">${td(t.i)}</span><span class="mc-row-int">${t.i}</span></div><div class="mc-badges">${sellHtml}${buyHtml}</div>`;
+    div.onclick=()=>{sel2=t.i;render();};
+    l2.appendChild(div);
+  });
+  f2.textContent=itd.ts.length+' trader'+(itd.ts.length!==1?'s':'');
+}
+
+function renderTradersMiller(){
+  const ql=q.toLowerCase();
+  let ft=TRADERS;
+  if(ql)ft=TRADERS.filter(x=>x.i.toLowerCase().includes(ql)||td(x.i).toLowerCase().includes(ql)||x.its.some(t=>t.i.toLowerCase().includes(ql)||id(t.i).toLowerCase().includes(ql)));
+
+  const ss=document.getElementById('statusStrip');
+  if(ql){
+    const th=ft.filter(x=>x.i.toLowerCase().includes(ql)||td(x.i).toLowerCase().includes(ql)).length;
+    const ih=ft.length-th;
+    document.getElementById('pillA').innerHTML=th?`<span class="spill a">◈ ${th} trader${th!==1?'s':''}</span>`:'';
+    document.getElementById('pillB').innerHTML=ih?`<span class="spill b">◉ ${ih} via item</span>`:'';
+    document.getElementById('sep').style.display=(th&&ih)?'':'none';
+    ss.classList.add('show');
+  }else ss.classList.remove('show');
+
+  const l1=document.getElementById('col1List');l1.innerHTML='';
+  ft.forEach(x=>{
+    const sel=sel1===x.i;
+    const tm=ql&&(x.i.toLowerCase().includes(ql)||td(x.i).toLowerCase().includes(ql));
+    const im=ql&&!tm;
+    const div=document.createElement('div');div.className='list-row'+(sel?' sel':'');
+    const dot=ql?`<span class="mdot ${tm?'dot-a':im?'dot-b':''}"></span>`:'';
+    div.innerHTML=`${dot}<div class="lr-body"><span class="lr-name" title="${td(x.i)}">${td(x.i)}</span><span class="lr-int">${x.i}</span></div><span class="lr-badge">${x.its.length}</span><svg class="lr-arrow" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>`;
+    div.onclick=()=>{sel1=x.i;sel2=null;render();};
+    l1.appendChild(div);
+  });
+  document.getElementById('col1Ftr').textContent=ft.length+' trader'+(ft.length!==1?'s':'');
+
+  const h2t=document.getElementById('col2HdrTxt');
+  const l2=document.getElementById('col2List');const f2=document.getElementById('col2Ftr');
+  if(!sel1){
+    l2.innerHTML='<div class="col-empty"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="4" rx="1"/><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="2" y="17" width="20" height="4" rx="1"/></svg><p>Select a trader</p></div>';
+    f2.textContent='—';h2t.textContent='Items';h2t.style.color='var(--text-muted)';return;
+  }
+  const trd=TRADERS.find(x=>x.i===sel1);if(!trd)return;
+  h2t.textContent=td(sel1);h2t.style.color='var(--accent-bright)';
+  l2.innerHTML='';
+  trd.its.forEach(item=>{
+    const sel=sel2===item.i;const m2=ql&&(item.i.toLowerCase().includes(ql)||id(item.i).toLowerCase().includes(ql));
+    const div=document.createElement('div');div.className='mc-row'+(sel?' sel':'')+(m2?' shi':'');
+    let sellHtml=hs(item)?`<div class="badge-group"><div class="badge-price sell">${item.sp}</div><div class="badge-qty sell">Qty: ${item.sq}</div></div>`:`<div class="badge-group"><div class="badge-dash">—</div></div>`;
+    let buyHtml=hb(item)?`<div class="badge-group"><div class="badge-price buy">${item.bp}</div><div class="badge-qty buy">Qty: ${item.bq}</div></div>`:`<div class="badge-group"><div class="badge-dash">—</div></div>`;
+    div.innerHTML=`<div class="mc-row-info"><span class="mc-row-name" title="${id(item.i)}">${id(item.i)}</span><span class="mc-row-int">${item.i}</span></div><div class="mc-badges">${sellHtml}${buyHtml}</div>`;
+    div.onclick=()=>{sel2=item.i;render();};
+    l2.appendChild(div);
+  });
+  f2.textContent=trd.its.length+' item'+(trd.its.length!==1?'s':'');
+}
+
+function renderCentre(){
+  const ce=document.getElementById('ctxEmpty'),cc=document.getElementById('ctxContent'),cb=document.getElementById('cBody');
+  if(!sel1){ce.style.display='flex';cc.style.display='none';cb.innerHTML='';return;}
+  ce.style.display='none';cc.style.display='flex';
+  
+  let hdrHtml='';
+  let bdyHtml='';
+
+  if(mode==='items'){
+    const item=ITEMS.find(x=>x.i===sel1);
+    hdrHtml=`
+      <div class="ch-sup"><span class="ch-int">${item.i}</span></div>
+      <div class="ch-name">${id(item.i)}</div>
+      <div class="ch-attr-row">
+        <div class="ch-attr"><span class="ch-attr-lbl">Mass</span><span class="ch-attr-val">${item.m||'--'} kg</span></div><div class="ch-div"></div>
+        <div class="ch-attr"><span class="ch-attr-lbl">Volume</span><span class="ch-attr-val">${item.v||'--'} SU</span></div><div class="ch-div"></div>
+        <div class="ch-attr"><span class="ch-attr-lbl">Base Price</span><span class="ch-attr-val">${item.b||'--'} Cr</span></div>
+      </div>`;
+    
+    if(sel2){
+      const trd=TRADERS.find(x=>x.i===sel2);
+      if(trd){
+        bdyHtml=`<table class="c-table"><thead><tr><th>${td(sel2)}'s Full Inventory</th><th class="right">Sell Price</th><th class="right">Buy Price</th></tr></thead><tbody>`;
+        trd.its.forEach(ti=>{
+          bdyHtml+=`<tr onclick="pivotTo('items', '${ti.i}')" title="Pivot to ${id(ti.i)}">
+            <td><span class="td-name">${id(ti.i)}</span><span class="td-sub">${ti.i}</span></td>
+            <td class="td-num" style="color:var(--sell-col)">${hs(ti)?ti.sp:'—'}</td>
+            <td class="td-num" style="color:var(--buy-col)">${hb(ti)?ti.bp:'—'}</td>
+          </tr>`;
+        });
+        bdyHtml+='</tbody></table>';
+      }
+    }else{
+      bdyHtml=`<div class="c-body-msg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg> Select a trader to view their full inventory</div>`;
+    }
+  }else{
+    const trd=TRADERS.find(x=>x.i===sel1);
+    hdrHtml=`
+      <div class="ch-sup"><span class="ch-int">${trd.i}</span></div>
+      <div class="ch-name">${td(trd.i)}</div>
+      <div class="ch-sub">${trd.st}</div>
+      <div class="ch-attr-row">
+        <div class="ch-attr"><span class="ch-attr-lbl">Trade Group</span><span class="ch-attr-val" style="color:var(--text-secondary)">${gshort(trd.g)}</span></div>
+      </div>`;
+    
+    if(sel2){
+      const item=ITEMS.find(x=>x.i===sel2);
+      if(item){
+        bdyHtml=`<table class="c-table"><thead><tr><th>Other Traders for ${id(sel2)}</th><th class="right">Sell Price</th><th class="right">Buy Price</th></tr></thead><tbody>`;
+        item.ts.forEach(it=>{
+          if(it.i===sel1) return; // Skip current
+          bdyHtml+=`<tr onclick="pivotTo('traders', '${it.i}')" title="Pivot to ${td(it.i)}">
+            <td><span class="td-name">${td(it.i)}</span><span class="td-sub">${it.i}</span></td>
+            <td class="td-num" style="color:var(--sell-col)">${hs(it)?it.sp:'—'}</td>
+            <td class="td-num" style="color:var(--buy-col)">${hb(it)?it.bp:'—'}</td>
+          </tr>`;
+        });
+        if(item.ts.length<=1) bdyHtml+=`<tr><td colspan="3" style="text-align:center;font-style:italic">No other traders carry this item.</td></tr>`;
+        bdyHtml+='</tbody></table>';
+      }
+    }else{
+      bdyHtml=`<div class="c-body-msg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg> Select an item to see who else trades it</div>`;
+    }
+  }
+  
+  cc.innerHTML=hdrHtml;
+  cb.innerHTML=bdyHtml;
+}
+
+function renderRight(){
+  const rb=document.getElementById('rpBody');
+  let activeTraderId = null;
+  if(mode==='traders' && sel1) activeTraderId = sel1;
+  if(mode==='items' && sel2) activeTraderId = sel2;
+  
+  if(!activeTraderId){
+    rb.innerHTML='<div class="rp-empty"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><p>Select a trader to view destinations</p></div>';
+    return;
+  }
+  
+  const trd=TRADERS.find(x=>x.i===activeTraderId);
+  const pois=trd?(trd.fa||[]):[];
+  
+  if(!pois.length){
+    rb.innerHTML=`<div class="rp-empty"><p>No known locations for ${td(activeTraderId)}</p></div>`;
+    return;
+  }
+  
+  let h=`<div class="rp-section"><div class="rp-lbl">Found At (${pois.length})</div>`;
+  pois.forEach(p=>{
+    const fObj = fMap[p.f] || {n:'Unknown',c:''};
+    h+=`<div class="rp-dest-card">
+          <div class="rp-dest-hdr">
+            <div class="rp-dest-name">${p.n}</div>
+            <div class="faction-badge ${fObj.c}">${fObj.n}</div>
+          </div>
+          <div class="rp-dest-loc">${p.l}</div>`;
+    
+    if(p.ct && p.ct.length){
+      h+=`<div class="rp-colocated">Also here: `;
+      p.ct.forEach((ctId, idx)=>{
+        h+=`<span onclick="pivotTo('traders', '${ctId}')">${td(ctId)}</span>${idx<p.ct.length-1?', ':''}`;
+      });
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  });
+  h+='</div>';
+  rb.innerHTML=h;
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
