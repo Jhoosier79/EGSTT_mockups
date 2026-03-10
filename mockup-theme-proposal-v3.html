@@ -66,7 +66,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .s-status.vis{display:flex}
 .s-pill{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700}
 .s-pill.star{background:rgba(251,191,36,.1);color:var(--match-star);border:1px solid rgba(251,191,36,.2)}
-.s-pill.pf{background:rgba(96,165,250,.1);color:var(--match-pf);border:1px solid rgba(96,165,250,.2)}
+.s-pill.pf{background:var(--accent-glow);color:var(--match-pf);border:1px solid var(--accent-dim)}
 
 /* MILLER COLUMNS */
 .miller{display:flex;flex:1;overflow:hidden}
@@ -101,8 +101,8 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .pf-hdr-l{display:flex;align-items:center;gap:4px;min-width:0}
 .pf-hdr-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
 .pf-hdr-star{font-size:10px;font-weight:600;color:var(--accent-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
-.pf-hdr-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:rgba(59,130,246,.1);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;flex-shrink:0;line-height:14px}
-.pf-filter{display:none;align-items:center;justify-content:space-between;padding:3px 10px;height:20px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;background:rgba(96,165,250,.04)}
+.pf-hdr-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:var(--accent-glow);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;flex-shrink:0;line-height:14px}
+.pf-filter{display:none;align-items:center;justify-content:space-between;padding:3px 10px;height:20px;flex-shrink:0;border-bottom:1px solid var(--border);font-size:9px;color:var(--text-muted);font-family:'Share Tech Mono',monospace;background:var(--accent-glow)}
 .pf-filter.vis{display:flex}
 .pf-filter-lbl{color:var(--match-pf);font-weight:600}
 .pf-list{flex:1;overflow-y:auto}
@@ -110,8 +110,8 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .pf-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
 .pf-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px 5px 10px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;gap:4px;min-height:34px}
 .pf-item:hover{background:var(--bg-hover)}
-.pf-item.sel{background:rgba(59,130,246,.1);border-left-color:var(--accent-bright)}
-.pf-item.sm{border-left-color:rgba(96,165,250,.35)}
+.pf-item.sel{background:var(--accent-glow);border-left-color:var(--accent-bright)}
+.pf-item.sm{border-left-color:var(--accent-dim)}
 .pf-item.sel.sm{border-left-color:var(--accent-bright)}
 .pf-info{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
 .pf-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -121,7 +121,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .pf-item.sel.sm .pf-name{color:var(--accent-bright)}
 .pf-type{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-badge{font-size:9px;font-family:'Share Tech Mono',monospace;background:var(--badge-bg);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text-muted);flex-shrink:0;text-align:center;line-height:14px;height:14px;min-width:14px}
-.pf-item.sel .pf-badge{color:var(--accent-bright);border-color:var(--accent-dim);background:rgba(59,130,246,.12)}
+.pf-item.sel .pf-badge{color:var(--accent-bright);border-color:var(--accent-dim);background:var(--accent-glow)}
 .pf-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-muted);padding:16px}
 .pf-empty svg{opacity:.2}
 .pf-empty p{font-size:10px;text-align:center;line-height:1.5}
@@ -164,13 +164,13 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .poi-list-col{width:210px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--border)}
 .poi-col-hdr{height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:var(--header-bg);border-bottom:1px solid var(--border);gap:6px}
 .poi-col-hdr-l{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:5px}
-.poi-col-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:rgba(59,130,246,.1);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;line-height:14px}
+.poi-col-count{font-size:9px;font-family:'Share Tech Mono',monospace;color:var(--accent-bright);background:var(--accent-glow);border:1px solid var(--accent-dim);border-radius:3px;padding:0 4px;line-height:14px}
 .poi-list{flex:1;overflow-y:auto}
 .poi-list::-webkit-scrollbar{width:3px}
 .poi-list::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:2px}
 .poi-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;cursor:pointer;border-left:2px solid transparent;transition:background .1s;border-bottom:1px solid var(--border);gap:6px}
 .poi-item:hover{background:var(--bg-hover)}
-.poi-item.sel{background:rgba(59,130,246,.08);border-left-color:var(--accent)}
+.poi-item.sel{background:var(--accent-glow);border-left-color:var(--accent)}
 .poi-item-l{display:flex;align-items:center;gap:7px;min-width:0}
 .poi-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .poi-item-name{font-size:11px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -225,9 +225,20 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
 .ce-auto-tag{font-size:8px;color:var(--text-muted);white-space:nowrap}
 
 /* CODE EXPORT AREA */
-.ce-export{padding:10px;background:var(--bg-base);border-top:2px solid var(--border-bright);max-height:180px;display:flex;flex-direction:column}
+.ce-export{padding:10px;background:var(--bg-base);border-top:2px solid var(--border-bright);display:flex;flex-direction:column;flex-shrink:0}
 .ce-export-label{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
-.ce-code{flex:1;background:#000;color:#22d3ee;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;border-radius:4px;overflow-y:auto;white-space:pre;border:1px solid var(--border)}
+.ce-code{background:#000;color:#22d3ee;font-family:'Share Tech Mono',monospace;font-size:10px;padding:8px;border-radius:4px;border:1px solid var(--border);resize:none;outline:none;line-height:1.5;height:144px;width:100%;white-space:pre}
+.ce-code:focus{border-color:var(--accent-dim)}
+.ce-save-row{display:flex;gap:6px;margin-top:6px;align-items:center}
+.ce-save-btn{height:24px;padding:0 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);font-family:'Exo 2',sans-serif;font-size:9px;font-weight:600;cursor:pointer;letter-spacing:.04em;white-space:nowrap;transition:all .15s}
+.ce-save-btn:hover{border-color:var(--border-bright);color:var(--text-primary)}
+.ce-save-btn.accent{background:var(--accent-glow);border-color:var(--accent-dim);color:var(--accent-bright)}
+.ce-save-as-row{display:none;gap:6px;margin-top:4px;align-items:center}
+.ce-save-as-row.vis{display:flex}
+.ce-save-as-input{flex:1;height:24px;background:var(--bg-raised);border:1px solid var(--accent-dim);border-radius:4px;padding:0 8px;font-family:'Exo 2',sans-serif;font-size:10px;color:var(--text-primary);outline:none}
+.ce-save-as-input:focus{border-color:var(--accent)}
+.ce-save-as-input::placeholder{color:var(--text-muted)}
+.ce-save-status{font-size:9px;margin-top:4px;font-family:'Share Tech Mono',monospace;transition:opacity .3s;min-height:12px}
 
 .ce-footer{flex-shrink:0;padding:7px 10px;border-top:1px solid var(--border);display:flex;gap:6px;background:var(--header-bg)}
 .ce-btn{flex:1;height:26px;border-radius:4px;border:1px solid var(--border);background:var(--bg-raised);color:var(--text-secondary);font-family:'Exo 2',sans-serif;font-size:10px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .15s}
@@ -248,17 +259,7 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
     
     <div class="theme-sw">
       <span class="theme-sw-label">Theme</span>
-      <select class="theme-select" id="themeDropdown" onchange="setTheme(this.value)">
-        <option value="deep-space">Deep Space</option>
-        <option value="plasma-cyan">Plasma Cyan</option>
-        <option value="nebula-violet">Nebula Violet</option>
-        <option value="life-support-green">Life Support Green</option>
-        <option value="star-hazard">Star Hazard</option>
-        <option value="void-command">Void Command</option>
-        <option value="daylight">Daylight</option>
-        <option value="zirax">Zirax</option>
-        <option value="polaris">Polaris</option>
-      </select>
+      <select class="theme-select" id="themeDropdown" onchange="setTheme(this.value)"></select>
     </div>
 
     <div class="t-tabs" style="margin-left:auto">
@@ -362,13 +363,23 @@ html,body{height:100%;background:var(--bg-base);color:var(--text-primary);font-f
       <div class="ce-export">
         <div class="ce-export-label">
             Source Object Output
-            <span style="color:var(--accent-bright); cursor:pointer;" onclick="copyToClipboard()">[Copy Object]</span>
+            <span id="ceCopyLabel" style="color:var(--accent-bright); cursor:pointer;" onclick="copyToClipboard()">[Copy Object]</span>
         </div>
-        <div class="ce-code" id="ceOutput"></div>
+        <textarea class="ce-code" id="ceOutput" spellcheck="false"></textarea>
+        <div class="ce-save-row">
+          <button class="ce-save-btn accent" onclick="savePaletteChanges()">Save Changes</button>
+          <button class="ce-save-btn" onclick="toggleSaveAsRow()">Save As New…</button>
+        </div>
+        <div class="ce-save-as-row" id="ceSaveAsRow">
+          <input class="ce-save-as-input" id="ceSaveAsInput" type="text" placeholder="New palette name…" onkeydown="if(event.key==='Enter')confirmSaveAsNew();if(event.key==='Escape')toggleSaveAsRow()"/>
+          <button class="ce-save-btn accent" onclick="confirmSaveAsNew()">Confirm</button>
+          <button class="ce-save-btn" onclick="toggleSaveAsRow()">Cancel</button>
+        </div>
+        <div class="ce-save-status" id="ceSaveStatus"></div>
       </div>
 
       <div class="ce-footer">
-        <button class="ce-btn" onclick="restoreOriginalFilePalette()">Factory Reset</button>
+        <button class="ce-btn" onclick="factoryReset()">Factory Reset</button>
         <button class="ce-btn primary" onclick="copyThemeCSS()">Copy CSS</button>
       </div>
     </div>
@@ -765,36 +776,210 @@ function selectPOI(poiid) {
 
 // ── V2 PALETTES ──
 const ORIGINAL_THEMES = {
-  'deep-space': {
-    '--bg-base': '#0a0a0a','--bg-panel': '#111111','--bg-raised': '#1a1a1a','--bg-hover': '#242424','--bg-selected': '#111e35','--border': '#2a2a2a','--border-bright': '#3d3d3d','--text-primary': '#e8e8e8','--text-secondary':'#a0a0a0','--text-muted': '#5a5a5a','--accent': '#3b82f6','--accent-dim': '#1d4ed8','--accent-glow': 'rgba(59,130,246,0.15)','--accent-bright': '#60a5fa','--badge-bg': '#0d0d0d','--header-bg': '#080808','--match-star': '#fbbf24','--match-pf': '#60a5fa',
-  },
-  'plasma-cyan': {
-    '--bg-base': '#080a0a','--bg-panel': '#0d1111','--bg-raised': '#141a1a','--bg-hover': '#1c2424','--bg-selected': '#082020','--border': '#1e2a2a','--border-bright': '#2d3d3d','--text-primary': '#e8f4f4','--text-secondary': '#a0b0b0','--text-muted': '#5a6666','--accent': '#06b6d4','--accent-dim': '#0891b2','--accent-glow': 'rgba(6,182,212,0.15)','--accent-bright': '#22d3ee','--badge-bg': '#060d0d','--header-bg': '#050808','--match-star': '#fbbf24','--match-pf': '#22d3ee',
-  },
-  'nebula-violet': {
-    '--bg-base': '#0a080a','--bg-panel': '#110d11','--bg-raised': '#1a141a','--bg-hover': '#241c24','--bg-selected': '#1a1225','--border': '#2a1e2a','--border-bright': '#3d2d3d','--text-primary': '#f4e8f4','--text-secondary': '#b0a0b0','--text-muted': '#665a66','--accent': '#8b5cf6','--accent-dim': '#6d28d9','--accent-glow': 'rgba(139,92,246,0.15)','--accent-bright': '#a78bfa','--badge-bg': '#0d060d','--header-bg': '#080508','--match-star': '#fbbf24','--match-pf': '#a78bfa',
-  },
-  'life-support-green': {
-    '--bg-base': '#080a08','--bg-panel': '#0d110d','--bg-raised': '#141a14','--bg-hover': '#1c241c','--bg-selected': '#0f1a11','--border': '#1e2a1e','--border-bright': '#2d3d2d','--text-primary': '#e8f4e8','--text-secondary': '#a0b0a0','--text-muted': '#5a665a','--accent': '#22c55e','--accent-dim': '#15803d','--accent-glow': 'rgba(34,197,94,0.15)','--accent-bright': '#4ade80','--badge-bg': '#060d06','--header-bg': '#050805','--match-star': '#fbbf24','--match-pf': '#4ade80',
-  },
-  'star-hazard': {
-    '--bg-base': '#0a0808','--bg-panel': '#110d0d','--bg-raised': '#1a1414','--bg-hover': '#241c1c','--bg-selected': '#2c1111','--border': '#2a1e1e','--border-bright': '#3d2d2d','--text-primary': '#f4e8e8','--text-secondary': '#b0a0a0','--text-muted': '#665a5a','--accent': '#f97316','--accent-dim': '#c2410c','--accent-glow': 'rgba(249,115,22,0.15)','--accent-bright': '#fdba74','--badge-bg': '#110000','--header-bg': '#0d0000','--match-star': '#fbbf24','--match-pf': '#fdba74',
-  },
-  'void-command': {
-    '--bg-base': '#000000','--bg-panel': '#0a0a0a','--bg-raised': '#121212','--bg-hover': '#1c1c1c','--bg-selected': '#262626','--border': '#333333','--border-bright': '#4d4d4d','--text-primary': '#ffffff','--text-secondary': '#a3a3a3','--text-muted': '#666666','--accent': '#ededed','--accent-dim': '#8a8a8a','--accent-glow': 'rgba(255,255,255,0.10)','--accent-bright': '#ffffff','--badge-bg': '#050505','--header-bg': '#000000','--match-star': '#fbbf24','--match-pf': '#ffffff',
-  },
-  'daylight': {
-    '--bg-base': '#f8f9fc','--bg-panel': '#f0f2f8','--bg-raised': '#e8eaf1','--bg-hover': '#dcdfe8','--bg-selected': '#ccd6f6','--border': '#c8ccd8','--border-bright': '#a8adc0','--text-primary': '#1c1e2e','--text-secondary':'#4a5270','--text-muted': '#9098b0','--accent': '#2563eb','--accent-dim': '#1d4ed8','--accent-glow': 'rgba(37,99,235,0.1)','--accent-bright': '#3b82f6','--badge-bg': '#eceef5','--header-bg': '#eef0f7','--match-star': '#d97706','--match-pf': '#2563eb',
-  },
-  'zirax': {
-    '--bg-base': '#0d0a0f','--bg-panel': '#15111a','--bg-raised': '#1a1520','--bg-hover': '#2a2030','--bg-selected': '#3a1525','--border': '#4a2030','--border-bright': '#6a3040','--text-primary': '#e0c5d0','--text-secondary':'#9b7a8a','--text-muted': '#7a5060','--accent': '#ef4444','--accent-dim': '#b91c1c','--accent-glow': 'rgba(239,68,68,0.15)','--accent-bright': '#f87171','--badge-bg': '#0d0a0f','--header-bg': '#0b0810','--match-star': '#f97316','--match-pf': '#f87171',
-  },
-  'polaris': {
-    '--bg-base': '#0f0d0a','--bg-panel': '#171410','--bg-raised': '#1e1a15','--bg-hover': '#2e2820','--bg-selected': '#352c18','--border': '#4a3a25','--border-bright': '#5a4835','--text-primary': '#e0d5c5','--text-secondary':'#9b8a7a','--text-muted': '#7a6550','--accent': '#f97316','--accent-dim': '#c2410c','--accent-glow': 'rgba(249,115,22,0.15)','--accent-bright': '#fb923c','--badge-bg': '#0f0d0a','--header-bg': '#0c0b08','--match-star': '#eab308','--match-pf': '#fb923c',
-  },
+	'default': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#1a1a1a',
+	  '--bg-selected': '#0f1a25',
+	  '--border': '#222222',
+	  '--border-bright': '#333333',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#06b6d4',
+	  '--accent-dim': '#0891b2',
+	  '--accent-glow': 'rgba(6,182,212,0.15)',
+	  '--accent-bright': '#22d3ee',
+	  '--badge-bg': '#050505',
+	  '--header-bg': '#000000',
+	  '--match-star': '#fbbf24',
+	  '--match-pf': '#22d3ee',
+	},
+	'uch-1': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#111828',
+	  '--bg-selected': '#0c1e4a',
+	  '--border': '#1c2236',
+	  '--border-bright': '#283350',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#1a4cc8',
+	  '--accent-dim': '#1236a0',
+	  '--accent-glow': 'rgba(26,76,200,0.15)',
+	  '--accent-bright': '#4a88ff',
+	  '--badge-bg': '#060810',
+	  '--header-bg': '#080e1c',
+	  '--match-star': '#eaa020',
+	  '--match-pf': '#4a88ff',
+	},
+	'ziraxian-scum': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#131211',
+	  '--bg-hover': '#221515',
+	  '--bg-selected': '#3a1515',
+	  '--border': '#1f2124',
+	  '--border-bright': '#2e3136',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#e01c1c',
+	  '--accent-dim': '#b91c1c',
+	  '--accent-glow': 'rgba(224,28,28,0.15)',
+	  '--accent-bright': '#ff3535',
+	  '--badge-bg': '#0f0808',
+	  '--header-bg': '#0f0808',
+	  '--match-star': '#f97316',
+	  '--match-pf': '#f87171',
+	},
+	'polaris': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#1c1508',
+	  '--bg-selected': '#2a1c08',
+	  '--border': '#1e2025',
+	  '--border-bright': '#2a2d35',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#f0950a',
+	  '--accent-dim': '#b86c08',
+	  '--accent-glow': 'rgba(240,149,10,0.15)',
+	  '--accent-bright': '#ffb030',
+	  '--badge-bg': '#0f0c08',
+	  '--header-bg': '#110e08',
+	  '--match-star': '#eab308',
+	  '--match-pf': '#60a5fa',
+	},
+	'talon1': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#1a1508',
+	  '--bg-selected': '#221a08',
+	  '--border': '#201e18',
+	  '--border-bright': '#2e2a20',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#4a8540',
+	  '--accent-dim': '#2a5a22',
+	  '--accent-glow': 'rgba(74,133,64,0.15)',
+	  '--accent-bright': '#72b860',
+	  '--badge-bg': '#0c0e0a',
+	  '--header-bg': '#0c100a',
+	  '--match-star': '#c89010',
+	  '--match-pf': '#72b860',
+	},
+	'star-hazard': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#241c1c',
+	  '--bg-selected': '#2c1111',
+	  '--border': '#222222',
+	  '--border-bright': '#333333',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#f97316',
+	  '--accent-dim': '#c2410c',
+	  '--accent-glow': 'rgba(249,115,22,0.15)',
+	  '--accent-bright': '#fdba74',
+	  '--badge-bg': '#110000',
+	  '--header-bg': '#0d0000',
+	  '--match-star': '#fbbf24',
+	  '--match-pf': '#fdba74',
+	},
+	'tiki-vee': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#241c24',
+	  '--bg-selected': '#1a1225',
+	  '--border': '#222222',
+	  '--border-bright': '#333333',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#9146ff',
+	  '--accent-dim': '#6d28d9',
+	  '--accent-glow': 'rgba(145,70,255,0.15)',
+	  '--accent-bright': '#a78bfa',
+	  '--badge-bg': '#0d060d',
+	  '--header-bg': '#0c0910',
+	  '--match-star': '#fbbf24',
+	  '--match-pf': '#a78bfa',
+	},
+	'plasma-cyan': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#1a1a1a',
+	  '--bg-selected': '#0f1a25',
+	  '--border': '#222222',
+	  '--border-bright': '#333333',
+	  '--text-primary': '#f0f0f0',
+	  '--text-secondary': '#909090',
+	  '--text-muted': '#555555',
+	  '--accent': '#06b6d4',
+	  '--accent-dim': '#0891b2',
+	  '--accent-glow': 'rgba(6,182,212,0.15)',
+	  '--accent-bright': '#22d3ee',
+	  '--badge-bg': '#060a0b',
+	  '--header-bg': '#070c0e',
+	  '--match-star': '#fbbf24',
+	  '--match-pf': '#22d3ee',
+	},
+	'void-command': {
+	  '--bg-base': '#000000',
+	  '--bg-panel': '#0a0a0a',
+	  '--bg-raised': '#121212',
+	  '--bg-hover': '#1c1c1c',
+	  '--bg-selected': '#262626',
+	  '--border': '#333333',
+	  '--border-bright': '#4d4d4d',
+	  '--text-primary': '#ffffff',
+	  '--text-secondary': '#a3a3a3',
+	  '--text-muted': '#666666',
+	  '--accent': '#ededed',
+	  '--accent-dim': '#8a8a8a',
+	  '--accent-glow': 'rgba(255,255,255,0.10)',
+	  '--accent-bright': '#ffffff',
+	  '--badge-bg': '#050505',
+	  '--header-bg': '#000000',
+	  '--match-star': '#fbbf24',
+	  '--match-pf': '#ffffff',
+	},
+	'daylight': {
+	  '--bg-base': '#f8f9fc',
+	  '--bg-panel': '#f0f2f8',
+	  '--bg-raised': '#e8eaf1',
+	  '--bg-hover': '#dcdfe8',
+	  '--bg-selected': '#ccd6f6',
+	  '--border': '#c8ccd8',
+	  '--border-bright': '#a8adc0',
+	  '--text-primary': '#1c1e2e',
+	  '--text-secondary': '#4a5270',
+	  '--text-muted': '#9098b0',
+	  '--accent': '#2563eb',
+	  '--accent-dim': '#1d4ed8',
+	  '--accent-glow': 'rgba(37,99,235,0.1)',
+	  '--accent-bright': '#3b82f6',
+	  '--badge-bg': '#eceef5',
+	  '--header-bg': '#eef0f7',
+	  '--match-star': '#d97706',
+	  '--match-pf': '#2563eb',
+	},
 };
 
 let THEMES = JSON.parse(JSON.stringify(ORIGINAL_THEMES));
+const USER_THEME_KEYS = new Set(); // tracks user-created palette keys
 
 const TOKEN_GROUPS = [
   { label: 'Backgrounds', tokens: ['--bg-base','--bg-panel','--bg-raised','--bg-hover','--bg-selected','--header-bg','--badge-bg'] },
@@ -804,28 +989,172 @@ const TOKEN_GROUPS = [
   { label: 'Indicators', tokens: ['--match-star','--match-pf'] },
 ];
 
-let activeThemeName = 'deep-space';
+let activeThemeName = 'default';
 
-function updateExportOutput() {
-    const vars = THEMES[activeThemeName];
-    let output = `'${activeThemeName}': {\n`;
-    Object.entries(vars).forEach(([k, v]) => {
-        output += `    '${k}': '${v}',\n`;
-    });
-    output += `},`;
-    document.getElementById('ceOutput').textContent = output;
+// ── Theme name formatter ──
+function formatThemeName(key) {
+  return key.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-function restoreOriginalFilePalette() {
-    THEMES[activeThemeName] = JSON.parse(JSON.stringify(ORIGINAL_THEMES[activeThemeName]));
-    setTheme(activeThemeName);
+// ── Rebuild the theme dropdown (built-ins + user palettes) ──
+function rebuildThemeDropdown() {
+  const sel = document.getElementById('themeDropdown');
+  sel.innerHTML = '';
+
+  // Built-in group
+  const builtinGroup = document.createElement('optgroup');
+  builtinGroup.label = 'Built-in';
+  Object.keys(ORIGINAL_THEMES).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = formatThemeName(key);
+    if (key === activeThemeName) opt.selected = true;
+    builtinGroup.appendChild(opt);
+  });
+  sel.appendChild(builtinGroup);
+
+  // Custom/user group
+  if (USER_THEME_KEYS.size > 0) {
+    const userGroup = document.createElement('optgroup');
+    userGroup.label = 'Custom';
+    USER_THEME_KEYS.forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = formatThemeName(key);
+      if (key === activeThemeName) opt.selected = true;
+      userGroup.appendChild(opt);
+    });
+    sel.appendChild(userGroup);
+  }
+
+  sel.value = activeThemeName;
+}
+
+// ── Export textarea ──
+function updateExportOutput() {
+  const vars = THEMES[activeThemeName];
+  let output = `'${activeThemeName}': {\n`;
+  Object.entries(vars).forEach(([k, v]) => {
+    output += `  '${k}': '${v}',\n`;
+  });
+  output += `},`;
+  document.getElementById('ceOutput').value = output;
+}
+
+// ── Parse a palette object from the textarea text ──
+function parsePaletteFromText(text) {
+  const nameMatch = text.match(/^\s*['"]([^'"]+)['"]\s*:/);
+  if (!nameMatch) return null;
+  const name = nameMatch[1];
+
+  const bodyMatch = text.match(/\{([\s\S]*)\}/);
+  if (!bodyMatch) return null;
+  const body = bodyMatch[1];
+
+  const vars = {};
+  // Match '--token': 'value'  (handles rgba values with commas)
+  const kvPattern = /['"](-{0,2}[a-zA-Z][^'"]*)['"]\s*:\s*['"]([^'"]*)['"]/g;
+  let m;
+  while ((m = kvPattern.exec(body)) !== null) {
+    vars[m[1]] = m[2];
+  }
+
+  return Object.keys(vars).length > 0 ? { name, vars } : null;
+}
+
+// ── Save textarea edits back to active palette ──
+function savePaletteChanges() {
+  const text = document.getElementById('ceOutput').value;
+  const parsed = parsePaletteFromText(text);
+  if (!parsed) {
+    showSaveStatus('⚠ Could not parse palette — check syntax', 'error');
+    return;
+  }
+  THEMES[activeThemeName] = parsed.vars;
+  setTheme(activeThemeName);
+  showSaveStatus('✓ Saved to "' + activeThemeName + '"', 'ok');
+}
+
+// ── Toggle the Save As New input row ──
+function toggleSaveAsRow() {
+  const row = document.getElementById('ceSaveAsRow');
+  const willShow = !row.classList.contains('vis');
+  row.classList.toggle('vis', willShow);
+  if (willShow) {
+    const input = document.getElementById('ceSaveAsInput');
+    input.value = '';
+    input.style.borderColor = '';
+    input.focus();
+  }
+}
+
+// ── Confirm Save As New palette ──
+function confirmSaveAsNew() {
+  const input = document.getElementById('ceSaveAsInput');
+  const rawName = input.value.trim();
+  if (!rawName) {
+    input.style.borderColor = '#ef4444';
+    setTimeout(() => { input.style.borderColor = ''; }, 1200);
+    return;
+  }
+
+  // Sanitise to kebab-case key
+  const key = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!key) {
+    showSaveStatus('⚠ Invalid palette name', 'error');
+    return;
+  }
+
+  // Prevent clobbering built-ins
+  if (ORIGINAL_THEMES[key] && !USER_THEME_KEYS.has(key)) {
+    showSaveStatus('⚠ "' + key + '" is a built-in — use a different name', 'error');
+    return;
+  }
+
+  const text = document.getElementById('ceOutput').value;
+  const parsed = parsePaletteFromText(text);
+  if (!parsed) {
+    showSaveStatus('⚠ Could not parse palette — check syntax', 'error');
+    return;
+  }
+
+  THEMES[key] = parsed.vars;
+  USER_THEME_KEYS.add(key);
+  activeThemeName = key;
+  rebuildThemeDropdown();
+  setTheme(key);
+  toggleSaveAsRow();
+  showSaveStatus('✓ Saved as "' + key + '"', 'ok');
+}
+
+// ── Brief status message near save row ──
+function showSaveStatus(msg, type) {
+  const el = document.getElementById('ceSaveStatus');
+  el.textContent = msg;
+  el.style.color = type === 'error' ? '#f87171' : '#4ade80';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, 2800);
+}
+
+// ── Factory Reset: restore ALL palettes to originals, nuke user palettes ──
+function factoryReset() {
+  THEMES = JSON.parse(JSON.stringify(ORIGINAL_THEMES));
+  USER_THEME_KEYS.clear();
+  // Fall back to default if active theme was user-created
+  if (!THEMES[activeThemeName]) activeThemeName = 'default';
+  rebuildThemeDropdown();
+  setTheme(activeThemeName);
+  showSaveStatus('✓ All palettes reset to factory defaults', 'ok');
 }
 
 function copyToClipboard() {
-    const text = document.getElementById('ceOutput').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-        alert('JavaScript object copied to clipboard.');
-    });
+  const text = document.getElementById('ceOutput').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const lbl = document.getElementById('ceCopyLabel');
+    lbl.textContent = '[Copied!]';
+    setTimeout(() => { lbl.textContent = '[Copy Object]'; }, 1500);
+  });
 }
 
 function hexToRgb(hex) {
@@ -842,7 +1171,7 @@ function applyColorChange(token, hex) {
   hex = hex.toLowerCase();
   THEMES[activeThemeName][token] = hex;
   document.documentElement.style.setProperty(token, hex);
-  
+
   if (token === '--accent') {
     const glowVal = rgbaFromAccent(hex, 0.15);
     THEMES[activeThemeName]['--accent-glow'] = glowVal;
@@ -855,16 +1184,17 @@ function applyColorChange(token, hex) {
 function renderColorEditor() {
   const body = document.getElementById('ceBody');
   const badge = document.getElementById('ceThemeBadge');
-  badge.textContent = activeThemeName.replace('-', ' ').toUpperCase();
+  const isUser = USER_THEME_KEYS.has(activeThemeName);
+  badge.textContent = formatThemeName(activeThemeName) + (isUser ? ' ★' : '');
   const currentVars = THEMES[activeThemeName];
   body.innerHTML = '';
-  
+
   TOKEN_GROUPS.forEach(group => {
     const gLabel = document.createElement('div');
     gLabel.className = 'ce-group-label';
     gLabel.textContent = group.label;
     body.appendChild(gLabel);
-    
+
     group.tokens.forEach(token => {
       const val = currentVars[token];
       const isAuto = token === '--accent-glow';
@@ -888,19 +1218,26 @@ function setTheme(name) {
   activeThemeName = name;
   const vars = THEMES[name];
   Object.entries(vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+  rebuildThemeDropdown();
   renderColorEditor();
 }
 
 function copyThemeCSS() {
   const vars = THEMES[activeThemeName];
   const css = `:root {\n${Object.entries(vars).map(([k,v]) => `  ${k}: ${v};`).join('\n')}\n}`;
-  navigator.clipboard.writeText(css);
+  navigator.clipboard.writeText(css).then(() => {
+    const btn = document.querySelector('.ce-btn.primary');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
 }
 
 // ── INITIALIZATION ──
-render();           // Render the UI columns
-selectStar(3);      // Pre-select Delta (ssid=3)
-setTheme('deep-space'); // Apply default theme vars explicitly
+render();               // Render the UI columns
+selectStar(3);          // Pre-select Delta (ssid=3)
+rebuildThemeDropdown(); // Populate theme selector (before setTheme)
+setTheme('default'); // Apply default theme vars explicitly
 </script>
 </body>
 </html>
