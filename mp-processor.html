@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EGS Trade Tool · MP Processor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & ROOT ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #03080f;
+      --bg2:         #060f1e;
+      --surface:     rgba(5, 15, 32, 0.94);
+      --surface2:    rgba(6, 18, 38, 0.9);
+      --border:      rgba(0, 210, 195, 0.16);
+      --border-hi:   rgba(0, 210, 195, 0.45);
+      --accent:      #00d2c3;
+      --accent-dim:  rgba(0, 210, 195, 0.08);
+      --accent-glow: rgba(0, 210, 195, 0.25);
+      --blue:        #0a7aff;
+      --amber:       #ffb700;
+      --amber-dim:   rgba(255, 183, 0, 0.1);
+      --amber-border:rgba(255, 183, 0, 0.25);
+      --text:        #5a90a8;
+      --text-mid:    #88b8cc;
+      --text-hi:     #cce8f4;
+      --text-dim:    #2e5060;
+      --success:     #00cc88;
+      --danger:      #ff4455;
+      --mono:        'Share Tech Mono', monospace;
+      --display:     'Orbitron', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── BACKGROUND LAYERS ── */
+    #bg-nebula {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 10% 65%, rgba(0, 60, 130, 0.14) 0%, transparent 100%),
+        radial-gradient(ellipse 55% 65% at 90% 25%, rgba(0, 140, 130, 0.09) 0%, transparent 100%),
+        radial-gradient(ellipse 90% 60% at 50% 90%, rgba(8, 25, 65, 0.25)  0%, transparent 100%),
+        radial-gradient(ellipse 40% 30% at 70% 60%, rgba(10, 50, 120, 0.08) 0%, transparent 100%);
+    }
+    #bg-stars {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    #bg-scan {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.035) 3px, rgba(0,0,0,0.035) 4px
+      );
+    }
+
+    @keyframes twinkle {
+      0%   { opacity: var(--dim); }
+      100% { opacity: var(--bright); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50%       { box-shadow: 0 0 18px 2px var(--accent-glow); }
+    }
+    @keyframes progress-shine {
+      0%   { background-position: -200% center; }
+      100% { background-position:  200% center; }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── APP SHELL ── */
+    .app {
+      position: relative; z-index: 2;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      margin-bottom: 52px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute; bottom: -1px; left: 50%;
+      transform: translateX(-50%);
+      width: 100px; height: 1px;
+      background: var(--accent);
+      box-shadow: 0 0 16px var(--accent);
+    }
+    .logo {
+      font-family: var(--display);
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      color: var(--text-hi);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .logo em {
+      color: var(--accent);
+      font-style: normal;
+      text-shadow: 0 0 28px rgba(0,210,195,0.55);
+    }
+    .header-sub {
+      margin-top: 10px;
+      font-size: 10px;
+      letter-spacing: 0.38em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 18px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+    .badge-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-border 2.5s ease-in-out infinite;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 28px 32px;
+      margin-bottom: 16px;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 16px; right: 16px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.35;
+    }
+    .step-label {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .step-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── DROP ZONE ── */
+    .drop-zone {
+      position: relative;
+      border: 1px dashed var(--border);
+      padding: 52px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: var(--accent-dim);
+      overflow: hidden;
+    }
+    .drop-zone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(0,210,195,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer; width: 100%;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--accent);
+      background: rgba(0, 210, 195, 0.06);
+      box-shadow: 0 0 32px rgba(0,210,195,0.07), inset 0 0 32px rgba(0,210,195,0.04);
+    }
+    .drop-hex {
+      font-size: 36px;
+      line-height: 1;
+      margin-bottom: 14px;
+      opacity: 0.35;
+      display: block;
+      font-family: var(--display);
+      color: var(--accent);
+    }
+    .drop-title {
+      font-family: var(--display);
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: var(--text-mid);
+      margin-bottom: 8px;
+    }
+    .drop-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+    }
+
+    /* ── FILE LOADED BANNER ── */
+    .file-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 11px 16px;
+      background: rgba(0, 204, 136, 0.06);
+      border: 1px solid rgba(0, 204, 136, 0.22);
+      font-size: 11px;
+      color: var(--success);
+      animation: slideUp 0.3s ease;
+    }
+    .file-banner.show { display: flex; }
+    .file-banner .fb-name { flex: 1; }
+    .file-banner .fb-meta { color: var(--text-dim); font-size: 10px; }
+
+    /* ── PROCESS CARD BLURB ── */
+    .process-blurb {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.8;
+      letter-spacing: 0.04em;
+      margin-bottom: 22px;
+    }
+    .process-blurb strong {
+      color: var(--text-mid);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+      padding: 13px 28px;
+    }
+    .btn-primary:hover:not(:disabled) {
+      box-shadow: 0 0 28px rgba(0, 210, 195, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: 0.28; cursor: not-allowed; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-mid);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-download {
+      background: var(--accent);
+      color: var(--bg);
+      font-weight: bold;
+      padding: 9px 16px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-download:hover {
+      box-shadow: 0 0 18px rgba(0, 210, 195, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* ── PROGRESS ── */
+    .progress-track {
+      height: 2px;
+      background: rgba(0, 210, 195, 0.1);
+      margin: 14px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(
+        90deg,
+        var(--accent) 0%,
+        rgba(255,255,255,0.6) 50%,
+        var(--accent) 100%
+      );
+      background-size: 200% auto;
+      transition: width 0.35s ease;
+      animation: progress-shine 2s linear infinite;
+      box-shadow: 0 0 6px var(--accent);
+    }
+    .log-box {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.9;
+      max-height: 130px;
+      overflow-y: auto;
+    }
+    .log-box .ll { display: flex; gap: 8px; }
+    .c-ok   { color: var(--success); }
+    .c-info { color: var(--accent); }
+    .c-dim  { color: var(--text-dim); }
+
+    /* ── TABS ── */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      font-family: var(--display);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-dim);
+      padding: 10px 22px 10px 0;
+      margin-right: 24px;
+      margin-bottom: -1px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+    }
+    .tab-btn:hover { color: var(--text-mid); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      text-shadow: 0 0 14px rgba(0, 210, 195, 0.45);
+    }
+
+    /* ── FACTION NOTE ── */
+    .faction-note {
+      padding: 11px 16px;
+      background: var(--amber-dim);
+      border: 1px solid var(--amber-border);
+      font-size: 10px;
+      color: var(--amber);
+      letter-spacing: 0.06em;
+      line-height: 1.7;
+      margin-bottom: 18px;
+    }
+
+    /* ── RESULTS GRID ── */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 10px;
+    }
+    .rc {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.35s, transform 0.35s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .rc.visible { opacity: 1; transform: translateY(0); }
+    .rc:hover   { border-color: rgba(0, 210, 195, 0.32); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .rc.faction-card { border-left: 2px solid var(--blue); }
+    .rc.merged-card  { border-left: 2px solid var(--amber); }
+    .rc-head { display: flex; align-items: flex-start; gap: 10px; }
+    .rc-glyph {
+      font-family: var(--display);
+      font-size: 18px;
+      color: var(--accent);
+      opacity: 0.6;
+      line-height: 1;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .rc-name {
+      font-family: var(--display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--text-hi);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .rc-tag {
+      display: inline-block;
+      margin-top: 5px;
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      padding: 2px 7px;
+      border: 1px solid;
+      text-transform: uppercase;
+    }
+    .rc-tag.t-faction { border-color: rgba(10,122,255,0.4); color: var(--blue); }
+    .rc-tag.t-merged  { border-color: var(--amber-border); color: var(--amber); }
+    .rc-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+    }
+    .rc-stat { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; }
+    .rc-stat .val {
+      display: block;
+      font-family: var(--display);
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      margin-bottom: 1px;
+    }
+    .rc-members {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      line-height: 1.8;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .rc-members strong {
+      color: var(--text-mid);
+      letter-spacing: 0.12em;
+      display: block;
+      margin-bottom: 3px;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+    /* ── MISC ── */
+    .hidden   { display: none !important; }
+    .loading-spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+    @media (max-width: 560px) {
+      .app { padding: 28px 14px 60px; }
+      .card { padding: 20px 18px; }
+      .logo { letter-spacing: 0.08em; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background -->
+  <div id="bg-nebula"></div>
+  <div id="bg-stars"></div>
+  <div id="bg-scan"></div>
+
+  <div class="app">
+
+    <!-- ── HEADER ── -->
+    <header class="header">
+      <div class="logo">EGS <em>TRADE TOOL</em></div>
+      <div class="header-sub">Multiplayer Database Processor</div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        Client-Side · No Data Leaves Your Machine
+      </div>
+    </header>
+
+    <!-- ── STEP 1: UPLOAD ── -->
+    <div class="card" id="uploadCard">
+      <div class="step-label">01 // Load Server Database</div>
+
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".db" aria-label="Upload global.db">
+        <span class="drop-hex">⬡</span>
+        <div class="drop-title">Drop global.db here</div>
+        <div class="drop-sub">or click to browse &nbsp;·&nbsp; Empyrion .db files only</div>
+      </div>
+
+      <div class="file-banner" id="fileBanner">
+        <span>✓</span>
+        <span class="fb-name" id="fileName">—</span>
+        <span class="fb-meta" id="fileMeta">—</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: PROCESS ── -->
+    <div class="card hidden" id="processCard">
+      <div class="step-label" id="processLabel">02 // Ready to Process</div>
+      <p class="process-blurb">
+        Both <strong>per-player</strong> and <strong>per-faction</strong> files are generated in a single pass.
+        After processing, switch between tabs to browse and download either set independently.
+      </p>
+      <button class="btn btn-primary" id="processBtn">
+        <span>▶</span> Process Database
+      </button>
+    </div>
+
+    <!-- ── PROGRESS ── -->
+    <div class="card hidden" id="progressCard">
+      <div class="step-label">
+        <span class="loading-spinner"></span>
+        Processing
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <!-- ── RESULTS ── -->
+    <div class="card hidden" id="resultsCard">
+      <div class="results-header">
+        <div class="step-label" style="margin:0" id="resultsLabel">03 // Output Files</div>
+        <button class="btn btn-ghost" id="downloadAllBtn">⬇ Download All</button>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="player">◈ By Player</button>
+        <button class="tab-btn" data-tab="faction">⬡ By Faction</button>
+      </div>
+
+      <div id="panelPlayer" class="tab-panel">
+        <div class="results-grid" id="gridPlayer"></div>
+      </div>
+
+      <div id="panelFaction" class="tab-panel hidden">
+        <div class="faction-note">
+          ⚠&nbsp; Faction names are not stored in global.db — the game only records numeric IDs.
+          Factions are labeled by their ID (e.g. "Faction 100") with member names shown on each card.
+        </div>
+        <div class="results-grid" id="gridFaction"></div>
+      </div>
+    </div>
+
+  </div><!-- /.app -->
+
+  <!-- sql.js (SQLite compiled to WebAssembly) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+
+  <script>
+  // ── STARFIELD ───────────────────────────────────────────────────────────────
+  (() => {
+    const c = document.getElementById('bg-stars');
+    const f = document.createDocumentFragment();
+    const colors = ['200,225,255', '180,210,255', '210,240,255', '200,230,220'];
+    for (let i = 0; i < 200; i++) {
+      const el  = document.createElement('div');
+      const sz  = Math.random() < 0.8 ? 1 : (Math.random() < 0.6 ? 1 : 2);
+      const dim = (0.15 + Math.random() * 0.25).toFixed(2);
+      const brt = (0.5  + Math.random() * 0.45).toFixed(2);
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      Object.assign(el.style, {
+        position:   'absolute',
+        width:      sz + 'px',
+        height:     sz + 'px',
+        borderRadius: '50%',
+        background: `rgba(${col}, ${brt})`,
+        top:   (Math.random() * 100) + '%',
+        left:  (Math.random() * 100) + '%',
+        '--dim': dim, '--bright': brt,
+        animation: `twinkle ${2.5 + Math.random() * 4}s ${(Math.random() * 5).toFixed(1)}s ease-in-out infinite alternate`,
+      });
+      f.appendChild(el);
+    }
+    c.appendChild(f);
+  })();
+
+  // ── GLOBALS ─────────────────────────────────────────────────────────────────
+  let SQL           = null;
+  let srcDb         = null;
+  let dlQueuePlayer  = [];   // [{ data: Uint8Array, filename: string }]
+  let dlQueueFaction = [];
+  let activeTab     = 'player';
+
+  // ── INIT SQL.JS ──────────────────────────────────────────────────────────────
+  (async () => {
+    try {
+      SQL = await initSqlJs({
+        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}`
+      });
+    } catch (e) {
+      alert('Failed to load sql.js engine. Check your internet connection.\n\n' + e.message);
+    }
+  })();
+
+  // ── FILE UPLOAD ──────────────────────────────────────────────────────────────
+  const dropZone  = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  async function handleFile(file) {
+    if (!SQL) { alert('sql.js is still loading — please wait a moment and try again.'); return; }
+    if (!file.name.toLowerCase().endsWith('.db')) { alert('Please select a .db file.'); return; }
+
+    const buf = await file.arrayBuffer();
+    if (srcDb) { srcDb.close(); srcDb = null; }
+
+    try {
+      srcDb = new SQL.Database(new Uint8Array(buf));
+    } catch (e) {
+      alert('Could not open this file as a SQLite database.\n\n' + e.message);
+      return;
+    }
+
+    // Validate it's an Empyrion DB
+    const needed  = ['Entities', 'LoginLogoff', 'DiscoveredPlayfields', 'DiscoveredPOIs', 'SolarSystems'];
+    const found   = srcDb.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values.map(r => r[0]) || [];
+    const missing = needed.filter(t => !found.includes(t));
+    if (missing.length) {
+      alert(`This doesn't look like an Empyrion global.db.\nMissing tables: ${missing.join(', ')}`);
+      srcDb.close(); srcDb = null;
+      return;
+    }
+
+    // Update UI
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileMeta').textContent = fmtBytes(file.size);
+    document.getElementById('fileBanner').classList.add('show');
+
+    // Count unique players for the label
+    const r = srcDb.exec("SELECT COUNT(DISTINCT playerid) FROM LoginLogoff WHERE playername != '' AND playername IS NOT NULL");
+    const n = r[0]?.values[0][0] ?? '?';
+
+    document.getElementById('processLabel').innerHTML =
+      `02 // Ready to Process <span style="color:var(--accent);margin-left:6px;font-size:9px;letter-spacing:0.1em">[${n} player${n===1?'':'s'} detected]</span>`;
+
+    // Hide stale results if reloading a new file
+    document.getElementById('resultsCard').classList.add('hidden');
+    document.getElementById('progressCard').classList.add('hidden');
+    document.getElementById('processCard').classList.remove('hidden');
+  }
+
+  // ── TABS ─────────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === tab)
+    );
+    document.getElementById('panelPlayer').classList.toggle('hidden',  tab !== 'player');
+    document.getElementById('panelFaction').classList.toggle('hidden', tab !== 'faction');
+  }
+
+  // ── PROCESS ─────────────────────────────────────────────────────────────────
+  document.getElementById('processBtn').addEventListener('click', run);
+
+  function addLog(msg, cls = 'c-dim') {
+    const box = document.getElementById('logBox');
+    const d = document.createElement('div');
+    d.className = 'll';
+    const sym = cls === 'c-ok' ? '✓' : cls === 'c-info' ? '▶' : '·';
+    d.innerHTML = `<span class="${cls}">${sym}</span><span class="${cls}">${escHtml(msg)}</span>`;
+    box.appendChild(d);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function setProgress(pct) {
+    document.getElementById('progressFill').style.width = Math.min(pct, 100) + '%';
+  }
+
+  async function run() {
+    if (!srcDb) return;
+
+    document.getElementById('processCard').classList.add('hidden');
+    document.getElementById('progressCard').classList.remove('hidden');
+    document.getElementById('logBox').innerHTML = '';
+    dlQueuePlayer  = [];
+    dlQueueFaction = [];
+    setProgress(5);
+
+    await tick();
+
+    try {
+      addLog('Reading LoginLogoff for player accounts…', 'c-info');
+      const players = getPlayers(srcDb);
+      const pNames  = Object.keys(players);
+      addLog(`${pNames.length} unique account${pNames.length===1?'':'s'}: ${pNames.join(', ')}`, 'c-ok');
+      setProgress(12);
+      await tick();
+
+      // ── Build player targets ──────────────────────────────────────────────
+      const playerTargets = Object.entries(players).map(([name, p]) => ({
+        key:       name,
+        label:     name,
+        filename:  name.replace(/[^a-zA-Z0-9_-]/g, '_') + '.db',
+        entityids: p.entityids,
+        facids:    p.personal_facids,
+        members:   [name],
+        isFaction: false,
+        isMerged:  p.entityids.length > 1,
+        charCount: p.entityids.length,
+      }));
+
+      // ── Build faction targets ─────────────────────────────────────────────
+      const factions = getFactions(players);
+      const factionTargets = Object.entries(factions).map(([key, f]) => ({
+        key,
+        label:     f.name,
+        filename:  key.replace(/[^a-zA-Z0-9_-]/g, '_') + '.db',
+        entityids: f.all_entityids,
+        facids:    f.all_facids,
+        members:   f.members,
+        isFaction: f.members.length > 1,
+        isMerged:  false,
+        charCount: 0,
+      }));
+
+      const totalTargets = playerTargets.length + factionTargets.length;
+      let done = 0;
+
+      // ── Process players ───────────────────────────────────────────────────
+      addLog(`Player mode → ${playerTargets.length} file${playerTargets.length===1?'':'s'}`, 'c-info');
+      await tick();
+      const playerResults = [];
+      for (const t of playerTargets) {
+        addLog(`  Building: ${t.label}…`, 'c-dim');
+        await tick();
+        const { outDb, stats } = buildOutputDb(srcDb, t.entityids, t.facids);
+        const data = outDb.export();
+        outDb.close();
+        dlQueuePlayer.push({ data, filename: t.filename });
+        playerResults.push({ ...t, stats });
+        addLog(`  ✓ ${t.label} → ${stats.ss} sys · ${stats.pf} pf · ${stats.poi} POIs`, 'c-ok');
+        done++;
+        setProgress(12 + Math.round((done / totalTargets) * 80));
+        await tick();
+      }
+
+      // ── Process factions ──────────────────────────────────────────────────
+      addLog(`Faction mode → ${factionTargets.length} file${factionTargets.length===1?'':'s'}`, 'c-info');
+      await tick();
+      const factionResults = [];
+      for (const t of factionTargets) {
+        addLog(`  Building: ${t.label}…`, 'c-dim');
+        await tick();
+        const { outDb, stats } = buildOutputDb(srcDb, t.entityids, t.facids);
+        const data = outDb.export();
+        outDb.close();
+        dlQueueFaction.push({ data, filename: t.filename });
+        factionResults.push({ ...t, stats });
+        addLog(`  ✓ ${t.label} → ${stats.ss} sys · ${stats.pf} pf · ${stats.poi} POIs`, 'c-ok');
+        done++;
+        setProgress(12 + Math.round((done / totalTargets) * 80));
+        await tick();
+      }
+
+      setProgress(100);
+      addLog('Complete.', 'c-ok');
+      await sleep(350);
+
+      // Render both grids
+      renderResults(playerResults,  document.getElementById('gridPlayer'),  dlQueuePlayer);
+      renderResults(factionResults, document.getElementById('gridFaction'), dlQueueFaction);
+
+      document.getElementById('progressCard').classList.add('hidden');
+      document.getElementById('resultsCard').classList.remove('hidden');
+
+      document.getElementById('resultsLabel').innerHTML =
+        `03 // Output Files <span style="color:var(--accent);margin-left:6px;font-size:9px">[${playerResults.length} player · ${factionResults.length} faction]</span>`;
+
+      // Reset to player tab on each new run
+      switchTab('player');
+
+    } catch (err) {
+      addLog('ERROR: ' + err.message, 'c-dim');
+      console.error(err);
+    }
+  }
+
+  // ── PLAYER MAP ───────────────────────────────────────────────────────────────
+  function getPlayers(db) {
+    const res = db.exec(`
+      SELECT playerid, playername, entityid, loginticks
+      FROM LoginLogoff
+      WHERE playername != '' AND playername IS NOT NULL
+      ORDER BY loginticks ASC
+    `);
+    if (!res.length) return {};
+
+    const bySteam = {};
+    for (const [pid, pname, eid, ticks] of res[0].values) {
+      if (!bySteam[pid]) bySteam[pid] = { name: pname, lastTicks: ticks, entityids: new Set() };
+      bySteam[pid].entityids.add(eid);
+      if (ticks >= bySteam[pid].lastTicks) {
+        bySteam[pid].name = pname;
+        bySteam[pid].lastTicks = ticks;
+      }
+    }
+
+    const players = {};
+    for (const [pid, info] of Object.entries(bySteam)) {
+      const eids   = [...info.entityids];
+      const eidSQL = eids.join(',') || '0';
+      const facRes = db.exec(`SELECT DISTINCT facid FROM Entities WHERE etype=1 AND entityid IN (${eidSQL})`);
+      const facids = new Set((facRes[0]?.values || []).map(r => r[0]));
+      players[info.name] = { playerid: pid, entityids: eids, personal_facids: facids };
+    }
+    return players;
+  }
+
+  // ── FACTION GROUPING ─────────────────────────────────────────────────────────
+  function getFactions(players) {
+    const byFacid = {};
+    for (const [name, p] of Object.entries(players)) {
+      for (const fid of p.personal_facids) {
+        if (!byFacid[fid]) byFacid[fid] = [];
+        byFacid[fid].push(name);
+      }
+    }
+
+    const factions = {};
+    const assigned = new Set();
+
+    // Named factions (facid != 1)
+    for (const [fid, names] of Object.entries(byFacid).sort((a, b) => Number(a[0]) - Number(b[0]))) {
+      if (Number(fid) === 1) continue;
+      const allEids = [], allFids = new Set();
+      for (const name of names) {
+        allEids.push(...players[name].entityids);
+        for (const f of players[name].personal_facids) allFids.add(f);
+        assigned.add(name);
+      }
+      const key = `Faction_${fid}`;
+      factions[key] = {
+        name:          `Faction ${fid}`,
+        members:       [...names].sort(),
+        all_entityids: allEids,
+        all_facids:    allFids,
+      };
+    }
+
+    // Solo players
+    for (const [name, p] of Object.entries(players)) {
+      if (!assigned.has(name)) {
+        factions[name] = {
+          name,
+          members:       [name],
+          all_entityids: [...p.entityids],
+          all_facids:    p.personal_facids,
+        };
+      }
+    }
+
+    return factions;
+  }
+
+  // ── DB BUILDER ───────────────────────────────────────────────────────────────
+  function buildOutputDb(srcDb, entityids, facids) {
+    const outDb  = new SQL.Database();
+    const eidSQL = (entityids.length ? entityids : [0]).join(',');
+    const fidSQL = ([...facids].length ? [...facids] : [0]).join(',');
+
+    // Discovery rows
+    const dpRes  = srcDb.exec(`SELECT * FROM DiscoveredPlayfields WHERE (facgroup=1 AND facid IN (${eidSQL})) OR (facgroup=0 AND facid IN (${fidSQL}))`);
+    const poiRes = srcDb.exec(`SELECT * FROM DiscoveredPOIs       WHERE (facgroup=1 AND facid IN (${eidSQL})) OR (facgroup=0 AND facid IN (${fidSQL}))`);
+    const dpRows  = dpRes[0]  || null;
+    const poiRows = poiRes[0] || null;
+
+    // Derive reference IDs
+    const allPfids = new Set(), poiEntityIds = new Set();
+    if (dpRows?.values) {
+      const fi = dpRows.columns.indexOf('pfid');
+      dpRows.values.forEach(r => allPfids.add(r[fi]));
+    }
+    if (poiRows?.values) {
+      const fi = poiRows.columns.indexOf('pfid'),
+            pi = poiRows.columns.indexOf('poiid');
+      poiRows.values.forEach(r => { allPfids.add(r[fi]); poiEntityIds.add(r[pi]); });
+    }
+
+    // Reference rows — filtered to discovered only
+    let pfRows = null, ssRows = null, entRows = null, structRows = null;
+    const ssids = new Set();
+
+    if (allPfids.size) {
+      pfRows = srcDb.exec(`SELECT * FROM Playfields WHERE pfid IN (${[...allPfids].join(',')})`)[0] || null;
+      if (pfRows?.values) {
+        const si = pfRows.columns.indexOf('ssid');
+        pfRows.values.forEach(r => ssids.add(r[si]));
+      }
+    }
+    if (ssids.size) {
+      ssRows = srcDb.exec(`SELECT * FROM SolarSystems WHERE ssid IN (${[...ssids].join(',')})`)[0] || null;
+    }
+    if (poiEntityIds.size) {
+      const eSQL = [...poiEntityIds].join(',');
+      entRows    = srcDb.exec(`SELECT * FROM Entities   WHERE entityid IN (${eSQL})`)[0] || null;
+      structRows = srcDb.exec(`SELECT * FROM Structures WHERE entityid IN (${eSQL})`)[0] || null;
+    }
+
+    // Write to output DB
+    const tables = [
+      ['SolarSystems',         ssRows],
+      ['Playfields',           pfRows],
+      ['Entities',             entRows],
+      ['Structures',           structRows],
+      ['DiscoveredPlayfields', dpRows],
+      ['DiscoveredPOIs',       poiRows],
+    ];
+    for (const [tbl, rows] of tables) {
+      const schRes = srcDb.exec(`SELECT sql FROM sqlite_master WHERE type='table' AND name='${tbl}'`);
+      if (!schRes[0]) continue;
+      outDb.run(schRes[0].values[0][0]);
+      if (!rows?.values?.length) continue;
+      const ph   = rows.columns.map(() => '?').join(',');
+      const stmt = outDb.prepare(`INSERT INTO [${tbl}] VALUES (${ph})`);
+      for (const row of rows.values) stmt.run(row);
+      stmt.free();
+    }
+
+    return {
+      outDb,
+      stats: {
+        ss:  ssRows?.values?.length  || 0,
+        pf:  pfRows?.values?.length  || 0,
+        dp:  dpRows?.values?.length  || 0,
+        poi: poiRows?.values?.length || 0,
+      }
+    };
+  }
+
+  // ── RENDER RESULTS ───────────────────────────────────────────────────────────
+  function renderResults(results, grid, queue) {
+    grid.innerHTML = '';
+
+    results.forEach((r, i) => {
+      const card = document.createElement('div');
+      let cls = 'rc';
+      if (r.isFaction) cls += ' faction-card';
+      else if (r.isMerged) cls += ' merged-card';
+      card.className = cls;
+
+      const glyph = r.isFaction ? '⬡' : '◈';
+
+      let tag = '';
+      if (r.isFaction)
+        tag = `<span class="rc-tag t-faction">${r.members.length} members</span>`;
+      else if (r.isMerged)
+        tag = `<span class="rc-tag t-merged">${r.charCount} chars merged</span>`;
+
+      const membersRow = (r.isFaction && r.members.length > 1)
+        ? `<div class="rc-members"><strong>Members</strong>${r.members.join(' · ')}</div>`
+        : '';
+
+      card.innerHTML = `
+        <div class="rc-head">
+          <div class="rc-glyph">${glyph}</div>
+          <div><div class="rc-name">${escHtml(r.label)}</div>${tag}</div>
+        </div>
+        <div class="rc-stats">
+          <div class="rc-stat"><span class="val">${r.stats.ss}</span>Systems</div>
+          <div class="rc-stat"><span class="val">${r.stats.pf}</span>Playfields</div>
+          <div class="rc-stat"><span class="val">${r.stats.dp}</span>Discovered</div>
+          <div class="rc-stat"><span class="val">${r.stats.poi}</span>POIs</div>
+        </div>
+        ${membersRow}
+        <button class="btn btn-download" data-idx="${i}">⬇&nbsp; ${escHtml(r.filename)}</button>
+      `;
+      grid.appendChild(card);
+      setTimeout(() => card.classList.add('visible'), 60 + i * 90);
+    });
+
+    grid.addEventListener('click', e => {
+      const btn = e.target.closest('[data-idx]');
+      if (btn) triggerDownload(queue[+btn.dataset.idx]);
+    });
+  }
+
+  // ── DOWNLOAD ─────────────────────────────────────────────────────────────────
+  document.getElementById('downloadAllBtn').addEventListener('click', async () => {
+    const queue = activeTab === 'player' ? dlQueuePlayer : dlQueueFaction;
+    for (let i = 0; i < queue.length; i++) {
+      triggerDownload(queue[i]);
+      await sleep(200);
+    }
+  });
+
+  function triggerDownload({ data, filename }) {
+    const url = URL.createObjectURL(new Blob([data], { type: 'application/x-sqlite3' }));
+    const a   = Object.assign(document.createElement('a'), { href: url, download: filename });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+  }
+
+  // ── UTILS ────────────────────────────────────────────────────────────────────
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const tick  = ()  => sleep(30);
+  function fmtBytes(b) {
+    if (b < 1024)       return b + ' B';
+    if (b < 1048576)    return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(1) + ' MB';
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  </script>
+</body>
+</html>
