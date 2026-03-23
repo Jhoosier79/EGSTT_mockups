@@ -436,7 +436,7 @@
     .rc-tag.t-merged  { border-color: var(--amber-border); color: var(--amber); }
     .rc-stats {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px 12px;
     }
     .rc-stat { font-size: 9px; color: var(--text-dim); letter-spacing: 0.08em; }
@@ -897,6 +897,23 @@
     return factions;
   }
 
+  // ── DEDUP ─────────────────────────────────────────────────────────────────────
+  // A location can appear as both a per-character (facgroup=1) and a faction-wide
+  // (facgroup=0) row. Keep one row per unique keyCol value, preferring the row
+  // with the smallest timeCol value (earliest discovery / creation).
+  function dedupRows(rows, keyCol, timeCol) {
+    const keyIdx  = rows.columns.indexOf(keyCol);
+    const timeIdx = rows.columns.indexOf(timeCol);
+    const best    = new Map();
+    for (const row of rows.values) {
+      const key = row[keyIdx];
+      if (!best.has(key) || row[timeIdx] < best.get(key)[timeIdx]) {
+        best.set(key, row);
+      }
+    }
+    return { columns: rows.columns, values: [...best.values()] };
+  }
+
   // ── DB BUILDER ───────────────────────────────────────────────────────────────
   function buildOutputDb(srcDb, entityids, facids) {
     const outDb  = new SQL.Database();
@@ -906,8 +923,15 @@
     // Discovery rows
     const dpRes  = srcDb.exec(`SELECT * FROM DiscoveredPlayfields WHERE (facgroup=1 AND facid IN (${eidSQL})) OR (facgroup=0 AND facid IN (${fidSQL}))`);
     const poiRes = srcDb.exec(`SELECT * FROM DiscoveredPOIs       WHERE (facgroup=1 AND facid IN (${eidSQL})) OR (facgroup=0 AND facid IN (${fidSQL}))`);
-    const dpRows  = dpRes[0]  || null;
-    const poiRows = poiRes[0] || null;
+    const bmRes  = srcDb.exec(`SELECT * FROM Bookmarks            WHERE (facgroup=1 AND facid IN (${eidSQL})) OR (facgroup=0 AND facid IN (${fidSQL}))`);
+    let dpRows  = dpRes[0]  || null;
+    let poiRows = poiRes[0] || null;
+    let bmRows  = bmRes[0]  || null;
+
+    // Deduplicate before deriving reference IDs
+    if (dpRows?.values?.length)  dpRows  = dedupRows(dpRows,  'pfid',  'gametime');
+    if (poiRows?.values?.length) poiRows = dedupRows(poiRows, 'poiid', 'gametime');
+    if (bmRows?.values?.length)  bmRows  = dedupRows(bmRows,  'bid',   'createdticks');
 
     // Derive reference IDs
     const allPfids = new Set(), poiEntityIds = new Set();
@@ -919,6 +943,10 @@
       const fi = poiRows.columns.indexOf('pfid'),
             pi = poiRows.columns.indexOf('poiid');
       poiRows.values.forEach(r => { allPfids.add(r[fi]); poiEntityIds.add(r[pi]); });
+    }
+    if (bmRows?.values) {
+      const fi = bmRows.columns.indexOf('pfid');
+      bmRows.values.forEach(r => { if (r[fi] != null) allPfids.add(r[fi]); });
     }
 
     // Reference rows — filtered to discovered only
@@ -949,6 +977,7 @@
       ['Structures',           structRows],
       ['DiscoveredPlayfields', dpRows],
       ['DiscoveredPOIs',       poiRows],
+      ['Bookmarks',            bmRows],
     ];
     for (const [tbl, rows] of tables) {
       const schRes = srcDb.exec(`SELECT sql FROM sqlite_master WHERE type='table' AND name='${tbl}'`);
@@ -968,6 +997,7 @@
         pf:  pfRows?.values?.length  || 0,
         dp:  dpRows?.values?.length  || 0,
         poi: poiRows?.values?.length || 0,
+        bm:  bmRows?.values?.length  || 0,
       }
     };
   }
@@ -1003,8 +1033,9 @@
         <div class="rc-stats">
           <div class="rc-stat"><span class="val">${r.stats.ss}</span>Systems</div>
           <div class="rc-stat"><span class="val">${r.stats.pf}</span>Playfields</div>
-          <div class="rc-stat"><span class="val">${r.stats.dp}</span>Discovered</div>
           <div class="rc-stat"><span class="val">${r.stats.poi}</span>POIs</div>
+          <div class="rc-stat"><span class="val">${r.stats.dp}</span>Discovered</div>
+          <div class="rc-stat"><span class="val">${r.stats.bm}</span>Bookmarks</div>
         </div>
         ${membersRow}
         <button class="btn btn-download" data-idx="${i}">⬇&nbsp; ${escHtml(r.filename)}</button>
